@@ -1,0 +1,7 @@
+domain: linka.cloud
+repo: go.linka.cloud/k8s/dns
+resources:
+- group: dns
+  kind: DNSRecord
+  version: v1alpha1
+version: "2"
