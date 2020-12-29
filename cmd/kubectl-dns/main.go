@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"reflect"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -21,13 +20,9 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"go.linka.cloud/k8s/dns/api/v1alpha1"
+	"go.linka.cloud/k8s/dns/pkg/record"
 )
 
-const (
-	APIVersion    = "dns.linka.cloud/v1alpha1"
-	DNSRecordList = "DNSRecordList"
-	DNSRecord     = "DNSRecord"
-)
 
 var (
 	rootCmd = cobra.Command{
@@ -63,7 +58,7 @@ var (
 			if err != nil {
 				return fmt.Errorf("invalid record: '%s': %v", args[0], err)
 			}
-			r := newDNSRecord(rr)
+			r := record.FromRR(rr)
 			b, err := yaml.Marshal(r)
 			if err != nil {
 				return err
@@ -79,11 +74,11 @@ var (
 		RunE: func(cmd *cobra.Command, args []string) error {
 			conf, err := config.GetConfig()
 			if err != nil {
-			    return err
+				return err
 			}
 			client, err := client2.New(conf, client2.Options{})
 			if err != nil {
-			    return err
+				return err
 			}
 			var l v1alpha1.DNSRecordList
 			if err := client.List(context.Background(), &l); err != nil {
@@ -131,8 +126,8 @@ func parse(file string, w io.Writer) error {
 
 	records := v1alpha1.DNSRecordList{
 		TypeMeta: metav1.TypeMeta{
-			APIVersion: APIVersion,
-			Kind:       DNSRecordList,
+			APIVersion: record.APIVersion,
+			Kind:       record.DNSRecordList,
 		},
 	}
 	zp := dns.NewZoneParser(f, "", "")
@@ -141,7 +136,7 @@ func parse(file string, w io.Writer) error {
 			continue
 		}
 		logrus.Info(r)
-		records.Items = append(records.Items, newDNSRecord(r))
+		records.Items = append(records.Items, record.FromRR(r))
 	}
 
 	b, err := yaml.Marshal(records)
@@ -154,75 +149,4 @@ func parse(file string, w io.Writer) error {
 	return nil
 }
 
-func newDNSRecord(r dns.RR) v1alpha1.DNSRecord {
-	name := strings.TrimSuffix(r.Header().Name, ".")
-	name = strings.Replace(name, ".", "-", -1)
-	name = strings.Replace(name, "_", "", -1)
-	name = strings.Replace(name, "*", "wildcard", -1)
-	if r.Header().Rrtype != dns.TypeA {
-		typeName := strings.ToLower(strings.TrimPrefix(reflect.TypeOf(r).String(), "*dns."))
-		name = fmt.Sprintf("%s-%s", name, typeName)
-	}
-	record := v1alpha1.DNSRecord{
-		TypeMeta: metav1.TypeMeta{
-			APIVersion: APIVersion,
-			Kind:       DNSRecord,
-		},
-		ObjectMeta: metav1.ObjectMeta{
-			Name: name,
-		},
-	}
-	var spec v1alpha1.DNSRecordSpec
-	switch rr := r.(type) {
-	case *dns.A:
-		spec = v1alpha1.DNSRecordSpec{
-			Name:  rr.Hdr.Name,
-			Class: rr.Hdr.Class,
-			Ttl:   rr.Hdr.Ttl,
-			ARecord: &v1alpha1.ARecord{
-				A: rr.A.String(),
-			}}
-	case *dns.CNAME:
-		spec = v1alpha1.DNSRecordSpec{
-			Name:   rr.Hdr.Name,
-			Class:  rr.Hdr.Class,
-			Ttl:    rr.Hdr.Ttl,
-			Target: rr.Target,
-		}
-	case *dns.SRV:
-		spec = v1alpha1.DNSRecordSpec{
-			Name:   rr.Hdr.Name,
-			Class:  rr.Hdr.Class,
-			Ttl:    rr.Hdr.Ttl,
-			Target: rr.Target,
-			SRVRecord: &v1alpha1.SRVRecord{
-				Priority: rr.Priority,
-				Weight:   rr.Weight,
-				Port:     rr.Port,
-			}}
-	case *dns.TXT:
-		spec = v1alpha1.DNSRecordSpec{
-			Name:  rr.Hdr.Name,
-			Class: rr.Hdr.Class,
-			Ttl:   rr.Hdr.Ttl,
-			TXTRecord: &v1alpha1.TXTRecord{
-				Txt: rr.Txt,
-			}}
-	case *dns.MX:
-		spec = v1alpha1.DNSRecordSpec{
-			Name:  rr.Hdr.Name,
-			Class: rr.Hdr.Class,
-			Ttl:   rr.Hdr.Ttl,
-			MXRecord: &v1alpha1.MXRecord{
-				Preference: rr.Preference,
-				Mx:         rr.Mx,
-			}}
-	default:
-		spec = v1alpha1.DNSRecordSpec{
-			Name: rr.Header().Name,
-			Raw:  rr.String(),
-		}
-	}
-	record.Spec = spec
-	return record
-}
+

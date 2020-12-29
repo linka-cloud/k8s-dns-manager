@@ -22,6 +22,7 @@ import (
 
 // DNSRecordSpec defines the desired state of DNSRecord
 type DNSRecordSpec struct {
+	// TODO(adphi):  Active bool ?
 	Name string `json:"name"`
 	// +optional
 	Class uint16 `json:"class,omitempty"`
@@ -39,6 +40,7 @@ type DNSRecordSpec struct {
 // DNSRecordStatus defines the observed state of DNSRecord
 type DNSRecordStatus struct {
 	Record string `json:"record,omitempty"`
+	// TODO(adphi): Active bool ? with dns check
 }
 
 // +kubebuilder:object:root=true

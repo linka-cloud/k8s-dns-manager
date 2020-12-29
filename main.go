@@ -30,6 +30,8 @@ import (
 
 	dnsv1alpha1 "go.linka.cloud/k8s/dns/api/v1alpha1"
 	"go.linka.cloud/k8s/dns/controllers"
+	"go.linka.cloud/k8s/dns/pkg/coredns"
+
 	// +kubebuilder:scaffold:imports
 )
 
@@ -54,9 +56,7 @@ func main() {
 			"Enabling this will ensure there is only one active controller manager.")
 	flag.Parse()
 
-	level := zap2.NewAtomicLevelAt(zapcore.FatalLevel)
-	ctrl.SetLogger(zap.New(zap.UseDevMode(true), zap.StacktraceLevel(&level)))
-	//ctrl.SetLogger(zap.New(zap.UseDevMode(true)))
+	ctrl.SetLogger(zap.New(zap.UseDevMode(true), zap.StacktraceLevel(zap2.NewAtomicLevelAt(zapcore.FatalLevel))))
 
 	mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
 		Scheme:             scheme,
@@ -78,7 +78,14 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "DNSRecord")
 		os.Exit(1)
 	}
+	// if err = (&dnsv1alpha1.DNSRecord{}).SetupWebhookWithManager(mgr); err != nil {
+	// 	setupLog.Error(err, "unable to create webhook", "webhook", "DNSRecord")
+	// 	os.Exit(1)
+	// }
 	// +kubebuilder:scaffold:builder
+
+
+	go coredns.Run("")
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
