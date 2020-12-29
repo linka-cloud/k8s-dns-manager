@@ -19,7 +19,6 @@ import (
 	"k8s.io/client-go/kubernetes/scheme"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
 	client2 "sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/client/config"
 	"sigs.k8s.io/yaml"
 
 	"go.linka.cloud/k8s/dns/api/v1alpha1"
@@ -40,7 +39,7 @@ var (
 			if ns == "" {
 				ns = "default"
 			}
-			conf, err := config.GetConfig()
+			conf, err := configFlags.ToRESTConfig()
 			if err != nil {
 				return err
 			}
