@@ -28,6 +28,8 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	"go.linka.cloud/k8s/dns/pkg/ptr"
 )
 
 // log is for logging in this package.
@@ -48,24 +50,50 @@ var _ webhook.Defaulter = &DNSRecord{}
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (in *DNSRecord) Default() {
 	dnsrecordlog.Info("default", "name", in.Name)
-	active := true
 	if in.Spec.Active == nil {
-		in.Spec.Active = &active
-	}
-	if in.Spec.Class == 0 {
-		in.Spec.Class = 1
-	}
-	if in.Spec.Ttl == 0 {
-		in.Spec.Ttl = 3600
+		in.Spec.Active = ptr.Bool(true)
 	}
 	switch {
-	case in.Spec.SRVRecord != nil:
-		if in.Spec.SRVRecord.Weight == 0 {
-			in.Spec.SRVRecord.Weight = 1
+	case in.Spec.A != nil:
+		if in.Spec.A.Class == 0 {
+			in.Spec.A.Class = 1
 		}
-	case in.Spec.MXRecord != nil:
-		if in.Spec.MXRecord.Preference == 0 {
-			in.Spec.MXRecord.Preference = 10
+		if in.Spec.A.Ttl == 0 {
+			in.Spec.A.Ttl = 3600
+		}
+	case in.Spec.CNAME != nil:
+		if in.Spec.CNAME.Class == 0 {
+			in.Spec.CNAME.Class = 1
+		}
+		if in.Spec.CNAME.Ttl == 0 {
+			in.Spec.CNAME.Ttl = 3600
+		}
+	case in.Spec.TXT != nil:
+		if in.Spec.TXT.Class == 0 {
+			in.Spec.TXT.Class = 1
+		}
+		if in.Spec.TXT.Ttl == 0 {
+			in.Spec.TXT.Ttl = 3600
+		}
+	case in.Spec.SRV != nil:
+		if in.Spec.SRV.Class == 0 {
+			in.Spec.SRV.Class = 1
+		}
+		if in.Spec.SRV.Ttl == 0 {
+			in.Spec.SRV.Ttl = 3600
+		}
+		if in.Spec.SRV.Weight == 0 {
+			in.Spec.SRV.Weight = 1
+		}
+	case in.Spec.MX != nil:
+		if in.Spec.MX.Class == 0 {
+			in.Spec.MX.Class = 1
+		}
+		if in.Spec.MX.Ttl == 0 {
+			in.Spec.MX.Ttl = 3600
+		}
+		if in.Spec.MX.Preference == 0 {
+			in.Spec.MX.Preference = 10
 		}
 	}
 }
@@ -95,35 +123,74 @@ func (r *DNSRecord) ValidateDelete() error {
 
 func (r *DNSRecord) validate() error {
 	var errs field.ErrorList
-	if !strings.HasSuffix(r.Spec.Name, ".") {
-		errs = append(errs, field.Invalid(field.NewPath("spec").Child("name"), r.Spec.Name, "must be an absolute dns name (should ends with a dot)"))
-	}
-	if r.Spec.SRVRecord != nil && r.Spec.Target == "" {
-		errs = append(errs, field.Invalid(field.NewPath("spec").Child("target"), r.Spec.Target, "SRV record: target is required"))
-	}
-	if r.Spec.ARecord != nil {
-		ip := net.ParseIP(r.Spec.ARecord.A)
-		if ip == nil || r.Spec.ARecord.A == "" {
-			errs = append(errs, field.Invalid(field.NewPath("spec").Child("a"), r.Spec.A, "A Record: a must be a valid ip address"))
-		}
-	}
-	if r.Spec.TXTRecord != nil && len(r.Spec.TXTRecord.Txt) == 0 {
-		errs = append(errs, field.Invalid(field.NewPath("spec").Child("txt"), r.Spec.Txt, "TXT Record: txt cannot be empty"))
-	}
-	if r.Spec.MXRecord != nil && r.Spec.MXRecord.Mx == "" {
-		errs = append(errs, field.Invalid(field.NewPath("spec").Child("mx"), r.Spec.Txt, "MX Record: mx cannot be empty"))
-	}
-	if r.Spec.ARecord == nil && r.Spec.TXTRecord == nil && r.Spec.MXRecord == nil && r.Spec.Raw == "" && r.Spec.Target == "" {
-		errs = append(errs, field.Invalid(field.NewPath("spec").Child("target"), r.Spec.Txt, "CNAME Record: target cannot be empty"))
-	}
-	if r.Spec.Raw != "" {
+	switch {
+	case r.Spec.A != nil:
+		errs = append(errs, r.Spec.A.validate()...)
+	case r.Spec.CNAME != nil:
+		errs = append(errs, r.Spec.CNAME.validate()...)
+	case r.Spec.TXT != nil:
+		errs = append(errs, r.Spec.TXT.validate()...)
+	case r.Spec.SRV != nil:
+		errs = append(errs, r.Spec.SRV.validate()...)
+	case r.Spec.MX != nil:
+		errs = append(errs, r.Spec.MX.validate()...)
+	case r.Spec.Raw != "":
 		rr, err := dns.NewRR(r.Spec.Raw)
 		if err != nil || rr == nil {
-			errs = append(errs, field.Invalid(field.NewPath("spec").Child("raw"), r.Spec.Txt, "Raw Record is invalid"))
+			errs = append(errs, field.Invalid(field.NewPath("spec").Child("raw"), r.Spec.Raw, "failed to parse raw record"))
 		}
+	default:
+		errs = append(errs, field.Invalid(field.NewPath("spec"), r.Spec, "neither a A, CNAME, TXT, SRV, MX or RAW record"))
 	}
 	if len(errs) == 0 {
 		return nil
 	}
 	return apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: r.Kind}, r.Name, errs)
+}
+
+func (r ARecord) validate() (errs field.ErrorList) {
+	if !strings.HasSuffix(r.Name, ".") {
+		errs = append(errs, field.Invalid(field.NewPath("spec").Child("a").Child("name"), r.Name, "must be an absolute dns name (should ends with a dot)"))
+	}
+	ip := net.ParseIP(r.Target)
+	if ip == nil || r.Target == "" {
+		errs = append(errs, field.Invalid(field.NewPath("spec").Child("a").Child("target"), r.Target, "A Record: a must be a valid ip address"))
+	}
+	return
+}
+func (r CNAMERecord) validate() (errs field.ErrorList) {
+	if !strings.HasSuffix(r.Name, ".") {
+		errs = append(errs, field.Invalid(field.NewPath("spec").Child("cname").Child("name"), r.Name, "must be an absolute dns name (should ends with a dot)"))
+	}
+	if r.Target == "" {
+		errs = append(errs, field.Invalid(field.NewPath("spec").Child("cname").Child("target"), r.Target, "SRV record: target is required"))
+	}
+	return
+}
+func (r TXTRecord) validate() (errs field.ErrorList) {
+	if !strings.HasSuffix(r.Name, ".") {
+		errs = append(errs, field.Invalid(field.NewPath("spec").Child("txt").Child("name"), r.Name, "must be an absolute dns name (should ends with a dot)"))
+	}
+	if len(r.Targets) == 0 {
+		errs = append(errs, field.Invalid(field.NewPath("spec").Child("txt").Child("targets"), r.Targets, "TXT Record: txt cannot be empty"))
+	}
+	return
+}
+func (r SRVRecord) validate() (errs field.ErrorList) {
+	if !strings.HasSuffix(r.Name, ".") {
+		errs = append(errs, field.Invalid(field.NewPath("spec").Child("srv").Child("name"), r.Name, "must be an absolute dns name (should ends with a dot)"))
+	}
+	if r.Target == "" {
+		errs = append(errs, field.Invalid(field.NewPath("spec").Child("srv").Child("target"), r.Target, "SRV record: target is required"))
+	}
+	return
+}
+func (r MXRecord) validate() (errs field.ErrorList) {
+	if !strings.HasSuffix(r.Name, ".") {
+		errs = append(errs, field.Invalid(field.NewPath("spec").Child("mx").Child("name"), r.Name, "must be an absolute dns name (should ends with a dot)"))
+	}
+	if r.Target == "" {
+		errs = append(errs, field.Invalid(field.NewPath("spec").Child("cname").Child("target"), r.Target, "MX Record: mx cannot be empty"))
+	}
+	return
 }

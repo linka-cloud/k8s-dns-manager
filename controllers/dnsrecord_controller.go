@@ -29,6 +29,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	dnsv1alpha1 "go.linka.cloud/k8s/dns/api/v1alpha1"
+	"go.linka.cloud/k8s/dns/pkg/ptr"
 	"go.linka.cloud/k8s/dns/pkg/record"
 	"go.linka.cloud/k8s/dns/pkg/recorder"
 )
@@ -106,18 +107,14 @@ func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		log.Error(err, "lookup failed")
 		return ctrl.Result{}, err
 	}
-	if rec.Status.Active != ok {
+	if ptr.ToBoolD(rec.Status.Active, false) != ok {
 		log.Info("updating record status", "active", ok)
-		rec.Status.Active = ok
+		rec.Status.Active = ptr.Bool(ok)
 		if err := r.Status().Update(ctx, &rec); err != nil {
 			log.Error(err, "update status")
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{}, nil
-	}
-	if rec.Spec.Active == nil {
-		active := true
-		rec.Spec.Active = &active
 	}
 	var state string
 	if ok {
@@ -125,7 +122,7 @@ func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 	} else {
 		state = "inactive"
 	}
-	if *rec.Spec.Active != ok {
+	if ptr.ToBoolD(rec.Spec.Active, true) != ok {
 		r.recorder.Warn(&rec, "Warning", fmt.Sprintf("record %s", state))
 		log.Info("status does not match desired state", "desired", *rec.Spec.Active, "actual", ok)
 		return ctrl.Result{RequeueAfter: time.Second}, nil

@@ -20,6 +20,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/config"
 
 	"go.linka.cloud/k8s/dns/api/v1alpha1"
+	"go.linka.cloud/k8s/dns/pkg/ptr"
 	"go.linka.cloud/k8s/dns/pkg/record"
 )
 
@@ -149,7 +150,7 @@ func (p *provider) Run() error {
 				log.Error(err, "add func handler failed")
 				return
 			}
-			if r.Spec.Active != nil && !*r.Spec.Active {
+			if ptr.ToBoolD(r.Spec.Active, true) {
 				log.Info("skip adding inactive record", "record", rr.String())
 				return
 			}
@@ -175,7 +176,7 @@ func (p *provider) Run() error {
 			log.Info("deleting record", "old", oldRR.String())
 			p.mu.Lock()
 			delete(p.records, fmt.Sprintf("%s:%d", oldRR.Header().Name, oldRR.Header().Rrtype))
-			if r.Spec.Active == nil || *r.Spec.Active {
+			if ptr.ToBoolD(r.Spec.Active, true) {
 				log.Info("adding record", "new", newRR.String())
 				p.records[fmt.Sprintf("%s:%d", newRR.Header().Name, newRR.Header().Rrtype)] = newRR
 			} else {

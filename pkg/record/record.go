@@ -41,51 +41,56 @@ func FromRR(r dns.RR) v1alpha1.DNSRecord {
 	switch rr := r.(type) {
 	case *dns.A:
 		spec = v1alpha1.DNSRecordSpec{
-			Name:  rr.Hdr.Name,
-			Class: rr.Hdr.Class,
-			Ttl:   rr.Hdr.Ttl,
-			ARecord: &v1alpha1.ARecord{
-				A: rr.A.String(),
-			}}
+			A: &v1alpha1.ARecord{
+				Name:   rr.Hdr.Name,
+				Class:  rr.Hdr.Class,
+				Ttl:    rr.Hdr.Ttl,
+				Target: rr.A.String(),
+			},
+		}
 	case *dns.CNAME:
 		spec = v1alpha1.DNSRecordSpec{
-			Name:   rr.Hdr.Name,
-			Class:  rr.Hdr.Class,
-			Ttl:    rr.Hdr.Ttl,
-			Target: rr.Target,
+			CNAME: &v1alpha1.CNAMERecord{
+				Name:   rr.Hdr.Name,
+				Class:  rr.Hdr.Class,
+				Ttl:    rr.Hdr.Ttl,
+				Target: rr.Target,
+			},
 		}
 	case *dns.SRV:
 		spec = v1alpha1.DNSRecordSpec{
-			Name:   rr.Hdr.Name,
-			Class:  rr.Hdr.Class,
-			Ttl:    rr.Hdr.Ttl,
-			Target: rr.Target,
-			SRVRecord: &v1alpha1.SRVRecord{
+			SRV: &v1alpha1.SRVRecord{
+				Name:     rr.Hdr.Name,
+				Class:    rr.Hdr.Class,
+				Ttl:      rr.Hdr.Ttl,
+				Target:   rr.Target,
 				Priority: rr.Priority,
 				Weight:   rr.Weight,
 				Port:     rr.Port,
-			}}
+			},
+		}
 	case *dns.TXT:
 		spec = v1alpha1.DNSRecordSpec{
-			Name:  rr.Hdr.Name,
-			Class: rr.Hdr.Class,
-			Ttl:   rr.Hdr.Ttl,
-			TXTRecord: &v1alpha1.TXTRecord{
-				Txt: rr.Txt,
-			}}
+			TXT: &v1alpha1.TXTRecord{
+				Name:    rr.Hdr.Name,
+				Class:   rr.Hdr.Class,
+				Ttl:     rr.Hdr.Ttl,
+				Targets: rr.Txt,
+			},
+		}
 	case *dns.MX:
 		spec = v1alpha1.DNSRecordSpec{
-			Name:  rr.Hdr.Name,
-			Class: rr.Hdr.Class,
-			Ttl:   rr.Hdr.Ttl,
-			MXRecord: &v1alpha1.MXRecord{
+			MX: &v1alpha1.MXRecord{
+				Name:       rr.Hdr.Name,
+				Class:      rr.Hdr.Class,
+				Ttl:        rr.Hdr.Ttl,
 				Preference: rr.Preference,
-				Mx:         rr.Mx,
-			}}
+				Target:     rr.Mx,
+			},
+		}
 	default:
 		spec = v1alpha1.DNSRecordSpec{
-			Name: rr.Header().Name,
-			Raw:  rr.String(),
+			Raw: rr.String(),
 		}
 	}
 	record.Spec = spec
@@ -93,43 +98,66 @@ func FromRR(r dns.RR) v1alpha1.DNSRecord {
 }
 
 func ToRR(r v1alpha1.DNSRecord) (dns.RR, error) {
-	h := dns.RR_Header{
-		Name:  r.Spec.Name,
-		Class: r.Spec.Class,
-		Ttl:   r.Spec.Ttl,
-	}
 	switch {
-	case r.Spec.ARecord != nil:
-		h.Rrtype = dns.TypeA
-		ip := net.ParseIP(r.Spec.ARecord.A)
+	case r.Spec.A != nil:
+		h := dns.RR_Header{
+			Name:   r.Spec.A.Name,
+			Rrtype: dns.TypeA,
+			Class:  r.Spec.A.Class,
+			Ttl:    r.Spec.A.Ttl,
+		}
+		ip := net.ParseIP(r.Spec.A.Target)
 		if ip == nil {
-			return nil, fmt.Errorf("invalid ip: %s", r.Spec.ARecord.A)
+			return nil, fmt.Errorf("invalid ip: %s", r.Spec.A.Target)
 		}
 		return &dns.A{Hdr: h, A: ip}, nil
-	case r.Spec.TXTRecord != nil:
-		h.Rrtype = dns.TypeTXT
-		if len(r.Spec.Txt) == 0 {
+	case r.Spec.TXT != nil:
+		h := dns.RR_Header{
+			Name:   r.Spec.TXT.Name,
+			Rrtype: dns.TypeTXT,
+			Class:  r.Spec.TXT.Class,
+			Ttl:    r.Spec.TXT.Ttl,
+		}
+		if len(r.Spec.TXT.Targets) == 0 {
 			return nil, errors.New("empty TXT record")
 		}
-		return &dns.TXT{Hdr: h, Txt: r.Spec.TXTRecord.Txt}, nil
-	case r.Spec.SRVRecord != nil:
-		h.Rrtype = dns.TypeSRV
-		if r.Spec.Target == "" {
+		return &dns.TXT{Hdr: h, Txt: r.Spec.TXT.Targets}, nil
+	case r.Spec.SRV != nil:
+		h := dns.RR_Header{
+			Name:   r.Spec.SRV.Name,
+			Rrtype: dns.TypeSRV,
+			Class:  r.Spec.SRV.Class,
+			Ttl:    r.Spec.SRV.Ttl,
+		}
+		if r.Spec.SRV.Target == "" {
 			return nil, errors.New("'target' is required for SRV Records")
 		}
 		return &dns.SRV{
 			Hdr:      h,
-			Priority: r.Spec.SRVRecord.Priority,
-			Weight:   r.Spec.SRVRecord.Weight,
-			Port:     r.Spec.SRVRecord.Port,
-			Target:   r.Spec.Target,
+			Priority: r.Spec.SRV.Priority,
+			Weight:   r.Spec.SRV.Weight,
+			Port:     r.Spec.SRV.Port,
+			Target:   r.Spec.SRV.Target,
 		}, nil
-	case r.Spec.MXRecord != nil:
-		h.Rrtype = dns.TypeMX
-		return &dns.MX{Hdr: h, Preference: r.Spec.MXRecord.Preference, Mx: r.Spec.MXRecord.Mx}, nil
-	case r.Spec.Target != "":
-		h.Rrtype = dns.TypeCNAME
-		return &dns.CNAME{Hdr: h, Target: r.Spec.Target}, nil
+	case r.Spec.MX != nil:
+		h := dns.RR_Header{
+			Name:   r.Spec.MX.Name,
+			Rrtype: dns.TypeMX,
+			Class:  r.Spec.MX.Class,
+			Ttl:    r.Spec.MX.Ttl,
+		}
+		return &dns.MX{Hdr: h, Preference: r.Spec.MX.Preference, Mx: r.Spec.MX.Target}, nil
+	case r.Spec.CNAME != nil:
+		h := dns.RR_Header{
+			Name:   r.Spec.CNAME.Name,
+			Rrtype: dns.TypeCNAME,
+			Class:  r.Spec.CNAME.Class,
+			Ttl:    r.Spec.CNAME.Ttl,
+		}
+		if r.Spec.CNAME.Target == "" {
+			return nil, errors.New("'target' is required for CNAME Records")
+		}
+		return &dns.CNAME{Hdr: h, Target: r.Spec.CNAME.Target}, nil
 	default:
 		if r.Spec.Raw == "" {
 			return nil, errors.New("unknown record type")

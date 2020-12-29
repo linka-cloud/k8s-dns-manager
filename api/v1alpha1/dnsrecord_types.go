@@ -22,17 +22,13 @@ import (
 
 // DNSRecordSpec defines the desired state of DNSRecord
 type DNSRecordSpec struct {
-	Active *bool  `json:"active,omitempty"`
-	Name   string `json:"name"`
-	// +optional
-	Class uint16 `json:"class,omitempty"`
-	Ttl   uint32 `json:"ttl,omitempty"`
-	// +optional
-	Target     string `json:"target,omitempty"`
-	*ARecord   `json:",inline,omitempty"`
-	*TXTRecord `json:",inline,omitempty"`
-	*SRVRecord `json:",inline,omitempty"`
-	*MXRecord  `json:",inline,omitempty"`
+	Active *bool        `json:"active,omitempty"`
+	A      *ARecord     `json:"a,omitempty"`
+	CNAME  *CNAMERecord `json:"cname,omitempty"`
+	TXT    *TXTRecord   `json:"txt,omitempty"`
+	SRV    *SRVRecord   `json:"srv,omitempty"`
+	MX     *MXRecord    `json:"rx,omitempty"`
+	// Raw is a  RFC 1035 style record string that github.com/miekg/dns will try to parse
 	// +optional
 	Raw string `json:"raw,omitempty"`
 }
@@ -40,7 +36,7 @@ type DNSRecordSpec struct {
 // DNSRecordStatus defines the observed state of DNSRecord
 type DNSRecordStatus struct {
 	Record string `json:"record,omitempty"`
-	Active bool   `json:"active"`
+	Active *bool  `json:"active,omitempty"`
 }
 
 // +kubebuilder:object:root=true
@@ -59,28 +55,52 @@ type DNSRecord struct {
 	Status DNSRecordStatus `json:"status,omitempty"`
 }
 
+type CNAMERecord struct {
+	Name string `json:"name"`
+	// +optional
+	Class  uint16 `json:"class,omitempty"`
+	Ttl    uint32 `json:"ttl"`
+	Target string `json:"target"`
+}
+
 type ARecord struct {
+	Name string `json:"name"`
+	// +optional
+	Class uint16 `json:"class,omitempty"`
+	Ttl   uint32 `json:"ttl"`
 	// TODO(adphi): support service, e.g. default/kubernetes
-	A string `json:"a,omitempty"`
+	Target string `json:"target,omitempty"`
 }
 
 type TXTRecord struct {
-	Txt []string `json:"txt,omitempty"`
+	Name string `json:"name"`
+	// +optional
+	Class   uint16   `json:"class,omitempty"`
+	Ttl     uint32   `json:"ttl"`
+	Targets []string `json:"targets,omitempty"`
 }
 
 type SRVRecord struct {
+	Name string `json:"name"`
+	// +optional
+	Class uint16 `json:"class,omitempty"`
+	Ttl   uint32 `json:"ttl"`
 	// +optional
 	Priority uint16 `json:"priority,omitempty"`
 	// +optional
 	Weight uint16 `json:"weight,omitempty"`
 	Port   uint16 `json:"port,omitempty"`
-	// Target   string `json:"target,omitempty"`
+	Target string `json:"target,omitempty"`
 }
 
 type MXRecord struct {
+	Name string `json:"name"`
+	// +optional
+	Class uint16 `json:"class,omitempty"`
+	Ttl   uint32 `json:"ttl"`
 	// +optional
 	Preference uint16 `json:"preference,omitempty"`
-	Mx         string `json:"mx,omitempty"`
+	Target     string `json:"target,omitempty"`
 }
 
 // +kubebuilder:object:root=true

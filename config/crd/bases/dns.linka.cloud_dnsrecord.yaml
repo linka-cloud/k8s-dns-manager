@@ -48,37 +48,98 @@ spec:
           description: DNSRecordSpec defines the desired state of DNSRecord
           properties:
             a:
-              description: 'TODO(adphi): support service, e.g. default/kubernetes'
-              type: string
+              properties:
+                class:
+                  type: integer
+                name:
+                  type: string
+                target:
+                  description: 'TODO(adphi): support service, e.g. default/kubernetes'
+                  type: string
+                ttl:
+                  format: int32
+                  type: integer
+              required:
+              - name
+              - ttl
+              type: object
             active:
               type: boolean
-            class:
-              type: integer
-            mx:
-              type: string
-            name:
-              type: string
-            port:
-              type: integer
-            preference:
-              type: integer
-            priority:
-              type: integer
+            cname:
+              properties:
+                class:
+                  type: integer
+                name:
+                  type: string
+                target:
+                  type: string
+                ttl:
+                  format: int32
+                  type: integer
+              required:
+              - name
+              - target
+              - ttl
+              type: object
             raw:
+              description: Raw is a  RFC 1035 style record string that github.com/miekg/dns
+                will try to parse
               type: string
-            target:
-              type: string
-            ttl:
-              format: int32
-              type: integer
+            rx:
+              properties:
+                class:
+                  type: integer
+                name:
+                  type: string
+                preference:
+                  type: integer
+                target:
+                  type: string
+                ttl:
+                  format: int32
+                  type: integer
+              required:
+              - name
+              - ttl
+              type: object
+            srv:
+              properties:
+                class:
+                  type: integer
+                name:
+                  type: string
+                port:
+                  type: integer
+                priority:
+                  type: integer
+                target:
+                  type: string
+                ttl:
+                  format: int32
+                  type: integer
+                weight:
+                  type: integer
+              required:
+              - name
+              - ttl
+              type: object
             txt:
-              items:
-                type: string
-              type: array
-            weight:
-              type: integer
-          required:
-          - name
+              properties:
+                class:
+                  type: integer
+                name:
+                  type: string
+                targets:
+                  items:
+                    type: string
+                  type: array
+                ttl:
+                  format: int32
+                  type: integer
+              required:
+              - name
+              - ttl
+              type: object
           type: object
         status:
           description: DNSRecordStatus defines the observed state of DNSRecord
@@ -87,8 +148,6 @@ spec:
               type: boolean
             record:
               type: string
-          required:
-          - active
           type: object
       type: object
   version: v1alpha1

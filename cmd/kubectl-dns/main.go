@@ -22,6 +22,7 @@ import (
 	"sigs.k8s.io/yaml"
 
 	"go.linka.cloud/k8s/dns/api/v1alpha1"
+	"go.linka.cloud/k8s/dns/pkg/ptr"
 	"go.linka.cloud/k8s/dns/pkg/record"
 )
 
@@ -80,6 +81,9 @@ var (
 			if err != nil {
 				return fmt.Errorf("invalid record: '%s': %v", args[0], err)
 			}
+			if rr == nil {
+				return fmt.Errorf("invalid record: '%s'", args[0])
+			}
 			r := record.FromRR(rr)
 			r.Namespace = ns
 			b, err := yaml.Marshal(r)
@@ -115,7 +119,7 @@ var (
 			}
 			for _, v := range l.Items {
 				parts := strings.Split(v.Status.Record, "\t")
-				parts = append(append([]string{v.Name, ns, strconv.FormatBool(v.Status.Active)}, parts...))
+				parts = append(append([]string{v.Name, ns, strconv.FormatBool(ptr.ToBool(v.Status.Active))}, parts...))
 				output = append(output, strings.Join(parts, " | "))
 			}
 			result := columnize.SimpleFormat(output)
