@@ -24,9 +24,9 @@ import (
 )
 
 const (
-	defaultTTL = 3600
+	defaultTTL        = 3600
 	defaultHostmaster = "hostmaster"
-	defaultApex = "dns"
+	defaultApex       = "dns"
 )
 
 type Provider interface {
@@ -144,9 +144,13 @@ func (p *provider) Run() error {
 	}
 	i.AddEventHandler(toolscache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			rr, err := makeRecord(obj)
+			rr, r, err := makeRecord(obj)
 			if err != nil {
 				log.Error(err, "add func handler failed")
+				return
+			}
+			if r.Spec.Active != nil && !*r.Spec.Active {
+				log.Info("skip adding inactive record", "record", rr.String())
 				return
 			}
 			log.Info("adding record", "record", rr.String())
@@ -158,27 +162,32 @@ func (p *provider) Run() error {
 			}
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			oldRR, err := makeRecord(newObj)
+			oldRR, r, err := makeRecord(newObj)
 			if err != nil {
 				log.Error(err, "update func handler failed")
 				return
 			}
-			newRR, err := makeRecord(newObj)
+			newRR, r, err := makeRecord(newObj)
 			if err != nil {
 				log.Error(err, "update func handler failed")
 				return
 			}
-			log.Info("replacing record", "old", oldRR.String(), "new", newRR.String())
+			log.Info("deleting record", "old", oldRR.String())
 			p.mu.Lock()
 			delete(p.records, fmt.Sprintf("%s:%d", oldRR.Header().Name, oldRR.Header().Rrtype))
-			p.records[fmt.Sprintf("%s:%d", newRR.Header().Name, newRR.Header().Rrtype)] = newRR
+			if r.Spec.Active == nil || *r.Spec.Active {
+				log.Info("adding record", "new", newRR.String())
+				p.records[fmt.Sprintf("%s:%d", newRR.Header().Name, newRR.Header().Rrtype)] = newRR
+			} else {
+				log.Info("skip adding inactive record", "record", newRR.String())
+			}
 			p.mu.Unlock()
 			if err := p.sync(); err != nil {
 				log.Error(err, "zones sync had errors")
 			}
 		},
 		DeleteFunc: func(obj interface{}) {
-			rr, err := makeRecord(obj)
+			rr, _, err := makeRecord(obj)
 			if err != nil {
 				log.Error(err, "delete func handler failed")
 				return
@@ -195,16 +204,16 @@ func (p *provider) Run() error {
 	return p.cache.Start(p.ctx)
 }
 
-func makeRecord(obj interface{}) (dns.RR, error) {
+func makeRecord(obj interface{}) (dns.RR, *v1alpha1.DNSRecord, error) {
 	r, ok := obj.(*v1alpha1.DNSRecord)
 	if !ok || r == nil {
-		return nil, errors.New("obj is nil or is not a DNSRecord")
+		return nil, nil, errors.New("obj is nil or is not a DNSRecord")
 	}
 	rr, err := record.ToRR(*r)
 	if err != nil {
-		return nil, fmt.Errorf("record conversion: %w", err)
+		return nil, nil, fmt.Errorf("record conversion: %w", err)
 	}
-	return rr, nil
+	return rr, r, nil
 }
 
 func init() {

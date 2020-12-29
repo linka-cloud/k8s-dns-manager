@@ -22,8 +22,8 @@ import (
 
 // DNSRecordSpec defines the desired state of DNSRecord
 type DNSRecordSpec struct {
-	// TODO(adphi):  Active bool ?
-	Name string `json:"name"`
+	Active *bool  `json:"active,omitempty"`
+	Name   string `json:"name"`
 	// +optional
 	Class uint16 `json:"class,omitempty"`
 	Ttl   uint32 `json:"ttl,omitempty"`
@@ -40,13 +40,14 @@ type DNSRecordSpec struct {
 // DNSRecordStatus defines the observed state of DNSRecord
 type DNSRecordStatus struct {
 	Record string `json:"record,omitempty"`
-	// TODO(adphi): Active bool ? with dns check
+	Active bool   `json:"active"`
 }
 
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Namespaced
 // +kubebuilder:subresource:status
 // +kubebuilder:resource:path=dnsrecord,shortName=records;record;dns
+// +kubebuilder:printcolumn:name="Active",type=boolean,JSONPath=`.status.active`
 // +kubebuilder:printcolumn:name="Record",type=string,JSONPath=`.status.record`
 
 // DNSRecord is the Schema for the dnsrecords API

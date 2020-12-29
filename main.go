@@ -31,7 +31,6 @@ import (
 	dnsv1alpha1 "go.linka.cloud/k8s/dns/api/v1alpha1"
 	"go.linka.cloud/k8s/dns/controllers"
 	"go.linka.cloud/k8s/dns/pkg/coredns"
-
 	// +kubebuilder:scaffold:imports
 )
 
@@ -83,7 +82,6 @@ func main() {
 	// 	os.Exit(1)
 	// }
 	// +kubebuilder:scaffold:builder
-
 
 	go coredns.Run("")
 

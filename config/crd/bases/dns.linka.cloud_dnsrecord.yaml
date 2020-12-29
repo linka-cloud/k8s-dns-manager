@@ -9,6 +9,9 @@ metadata:
   name: dnsrecord.dns.linka.cloud
 spec:
   additionalPrinterColumns:
+  - JSONPath: .status.active
+    name: Active
+    type: boolean
   - JSONPath: .status.record
     name: Record
     type: string
@@ -47,6 +50,8 @@ spec:
             a:
               description: 'TODO(adphi): support service, e.g. default/kubernetes'
               type: string
+            active:
+              type: boolean
             class:
               type: integer
             mx:
@@ -78,8 +83,12 @@ spec:
         status:
           description: DNSRecordStatus defines the observed state of DNSRecord
           properties:
+            active:
+              type: boolean
             record:
               type: string
+          required:
+          - active
           type: object
       type: object
   version: v1alpha1

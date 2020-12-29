@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/miekg/dns"
@@ -22,7 +23,6 @@ import (
 	"go.linka.cloud/k8s/dns/api/v1alpha1"
 	"go.linka.cloud/k8s/dns/pkg/record"
 )
-
 
 var (
 	rootCmd = cobra.Command{
@@ -85,10 +85,11 @@ var (
 				return err
 			}
 			output := []string{
-				"NAME | TTL | | TYPE | VALUE",
+				"NAME  | ACTIVE | TTL | | TYPE | VALUE",
 			}
 			for _, v := range l.Items {
 				parts := strings.Split(v.Status.Record, "\t")
+				parts = append(parts[:1], append([]string{strconv.FormatBool(v.Status.Active)}, parts[1:]...)...)
 				output = append(output, strings.Join(parts, " | "))
 			}
 			result := columnize.SimpleFormat(output)
@@ -148,5 +149,3 @@ func parse(file string, w io.Writer) error {
 	}
 	return nil
 }
-
-

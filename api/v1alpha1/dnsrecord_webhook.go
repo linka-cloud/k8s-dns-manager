@@ -48,7 +48,10 @@ var _ webhook.Defaulter = &DNSRecord{}
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (in *DNSRecord) Default() {
 	dnsrecordlog.Info("default", "name", in.Name)
-
+	active := true
+	if in.Spec.Active == nil {
+		in.Spec.Active = &active
+	}
 	if in.Spec.Class == 0 {
 		in.Spec.Class = 1
 	}
