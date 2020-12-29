@@ -155,7 +155,7 @@ var (
 			if err := client.Get(context.Background(), client2.ObjectKey{Namespace: ns, Name: args[0]}, &r); err != nil {
 				return err
 			}
-			if r.Spec.Active != nil && *r.Spec.Active {
+			if r.Spec.Active != nil && !*r.Spec.Active {
 				return nil
 			}
 			active := false
