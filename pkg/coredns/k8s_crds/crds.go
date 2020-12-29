@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	name = "crds"
+	name = "k8s_crds"
 )
 
 var log = logf.Log.WithName("coredns-crds")

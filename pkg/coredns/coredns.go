@@ -1,4 +1,4 @@
-// Package coremain contains the functions for starting CoreDNS.
+// Package coredns contains the functions for starting CoreDNS.
 package coredns
 
 import (
@@ -20,7 +20,7 @@ const (
 
 	defautConfig = `
 .:53 {
-    crds
+    k8s_crds
     forward . 8.8.8.8
     log
     errors
@@ -31,7 +31,54 @@ const (
 var Config = defautConfig
 
 func init() {
-	dnsserver.Directives = append(dnsserver.Directives, "crds")
+	dnsserver.Directives = []string{
+		"metadata",
+		"cancel",
+		"tls",
+		"reload",
+		"nsid",
+		"bufsize",
+		"root",
+		"bind",
+		"debug",
+		"trace",
+		"ready",
+		"health",
+		"pprof",
+		"prometheus",
+		"errors",
+		"log",
+		"dnstap",
+		"dns64",
+		"acl",
+		"any",
+		"chaos",
+		"loadbalance",
+		"cache",
+		"rewrite",
+		"dnssec",
+		"autopath",
+		"template",
+		"transfer",
+		"hosts",
+		"route53",
+		"azure",
+		"clouddns",
+		"k8s_crds",
+		"k8s_external",
+		"kubernetes",
+		"file",
+		"auto",
+		"secondary",
+		"etcd",
+		"loop",
+		"forward",
+		"grpc",
+		"erratic",
+		"whoami",
+		"on",
+		"sign",
+	}
 }
 
 // Run is CoreDNS's main() function.
