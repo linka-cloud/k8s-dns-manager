@@ -27,6 +27,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/controller"
 
 	dnsv1alpha1 "go.linka.cloud/k8s/dns/api/v1alpha1"
 	"go.linka.cloud/k8s/dns/pkg/ptr"
@@ -136,6 +137,7 @@ func (r *DNSRecordReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.recorder = recorder.New(mgr.GetEventRecorderFor("DNSRecord"))
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&dnsv1alpha1.DNSRecord{}).
+		WithOptions(controller.Options{MaxConcurrentReconciles: 8}).
 		Complete(r)
 }
 
