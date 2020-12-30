@@ -39,11 +39,13 @@ func TestConfig(t *testing.T) {
 				Metrics: true,
 				Errors:  true,
 				Log:     true,
+				Cache:   300,
 			},
 			want: `
 .:53 {
 	k8s_crds
 	forward . 8.8.8.8 8.8.4.4 
+	cache 300
 	log
 	errors
 	prometheus

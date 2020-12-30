@@ -10,6 +10,7 @@ type Config struct {
 	Log     bool
 	Errors  bool
 	Metrics bool
+	Cache   int
 }
 
 func (c Config) Render() (string, error) {
@@ -25,6 +26,9 @@ var configTemplate = template.Must(template.New("corefile").Parse(`
 	k8s_crds
 {{- if .Forward }}
 	forward . {{ range $val := .Forward }}{{ $val }} {{ end }}
+{{- end }}
+{{- if .Cache }}
+	cache {{ .Cache }}
 {{- end }}
 {{- if .Log }}
 	log

@@ -50,21 +50,25 @@ func init() {
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
+	var enableWebhook bool
 	var noDNSServer bool
 	var dnsLog bool
 	var dnsForward []string
 	var dnsMetrics bool
+	var dnsCache int
 	var externalAddress string
 
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
-	flag.BoolVar(&noDNSServer, "no-dns", false, "do not run in process coredns server")
-	flag.BoolVar(&dnsLog, "dns-log", false, "enable coredns query logs")
-	flag.StringSliceVar(&dnsForward, "dns-forward", nil, "dns forward servers")
-	flag.BoolVar(&dnsMetrics, "dns-metrics", false, "enable coredns metrics")
-	flag.StringVarP(&externalAddress, "external-address", "a", "127.0.0.1", "the external dns server address, e.g the loadbalancer service IP")
+	flag.BoolVar(&enableWebhook, "enable-webhook", false, "Enable the validation webhook")
+	flag.BoolVar(&noDNSServer, "no-dns", false, "Do not run in process coredns server")
+	flag.BoolVar(&dnsLog, "dns-log", false, "Enable coredns query logs")
+	flag.StringSliceVar(&dnsForward, "dns-forward", nil, "Dns forward servers")
+	flag.BoolVar(&dnsMetrics, "dns-metrics", false, "Enable coredns metrics")
+	flag.IntVar(&dnsCache, "dns-cache", 0, "Enable coredns cache with ttl (in seconds)")
+	flag.StringVarP(&externalAddress, "external-address", "a", "127.0.0.1", "The external dns server address, e.g the loadbalancer service IP")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true), zap.StacktraceLevel(zap2.NewAtomicLevelAt(zapcore.FatalLevel))))
@@ -89,10 +93,13 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "DNSRecord")
 		os.Exit(1)
 	}
-	// if err = (&dnsv1alpha1.DNSRecord{}).SetupWebhookWithManager(mgr); err != nil {
-	// 	setupLog.Error(err, "unable to create webhook", "webhook", "DNSRecord")
-	// 	os.Exit(1)
-	// }
+
+	if enableWebhook {
+		if err = (&dnsv1alpha1.DNSRecord{}).SetupWebhookWithManager(mgr); err != nil {
+			setupLog.Error(err, "unable to create webhook", "webhook", "DNSRecord")
+			os.Exit(1)
+		}
+	}
 	// +kubebuilder:scaffold:builder
 
 	if !noDNSServer {
@@ -100,6 +107,7 @@ func main() {
 			Forward: dnsForward,
 			Log:     dnsLog,
 			Errors:  true,
+			Cache:   dnsCache,
 			Metrics: dnsMetrics,
 		}.Render()
 		setupLog.Info("coredns config", "corefile", conf)

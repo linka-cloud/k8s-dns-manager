@@ -137,7 +137,7 @@ mx		IN	MX      10 a.miek.nl.`
 
 func TestCRDS(t *testing.T) {
 	records := make(map[string]dns.RR)
-	zp := dns.NewZoneParser(strings.NewReader(dbMiekNL), dns.Fqdn("miek.nl."), "")
+	zp := dns.NewZoneParser(strings.NewReader(dbMiekNL), "", "")
 	for r, ok := zp.Next(); ok; r, ok = zp.Next() {
 		if r == nil {
 			continue
