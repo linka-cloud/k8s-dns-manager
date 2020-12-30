@@ -180,7 +180,7 @@ func (p *provider) Run() error {
 			}
 		},
 		UpdateFunc: func(oldObj, newObj interface{}) {
-			oldRR, r, err := makeRecord(newObj)
+			oldRR, r, err := makeRecord(oldObj)
 			if err != nil {
 				log.Error(err, "update func handler failed")
 				return
