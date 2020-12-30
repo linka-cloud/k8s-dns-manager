@@ -15,7 +15,8 @@ var (
 	NewCmd = &cobra.Command{
 		Use:          "create [record]",
 		Short:        "create a DNSRecord from bind record format and print it to stdout",
-		Example:      `kubectl dns create 'dns.google.com. IN A 8.8.8.8' | kubectl apply -f`,
+		Example:      `
+	kubectl dns create 'dns.google.com. IN A 8.8.8.8' | kubectl apply -f -`,
 		Aliases:      []string{"new", "add"},
 		Args:         cobra.ExactArgs(1),
 		SilenceUsage: true,
