@@ -7,9 +7,16 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
   - dns.linka.cloud
   resources:
-  - dnsrecords
+  - dnsrecord
   verbs:
   - create
   - delete
@@ -21,7 +28,7 @@ rules:
 - apiGroups:
   - dns.linka.cloud
   resources:
-  - dnsrecords/status
+  - dnsrecord/status
   verbs:
   - get
   - patch

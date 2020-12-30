@@ -1,7 +1,9 @@
 domain: linka.cloud
 repo: go.linka.cloud/k8s/dns
+projectName: dns
+layout: go.kubebuilder.io/v2
 resources:
 - group: dns
   kind: DNSRecord
   version: v1alpha1
-version: "2"
+version: "3-alpha"

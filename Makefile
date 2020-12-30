@@ -1,6 +1,6 @@
 
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+IMG ?= registry.gitlab.com/linka-cloud/k8s/dns:latest
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 
@@ -64,6 +64,8 @@ docker-build: test
 # Push the docker image
 docker-push:
 	docker push ${IMG}
+
+docker: docker-build docker-push
 
 # find or download controller-gen
 # download controller-gen if necessary

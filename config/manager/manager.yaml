@@ -2,7 +2,7 @@ apiVersion: v1
 kind: Namespace
 metadata:
   labels:
-    control-plane: controller-manager
+    control-plane: dns-controller
   name: system
 ---
 apiVersion: apps/v1
@@ -11,24 +11,29 @@ metadata:
   name: controller-manager
   namespace: system
   labels:
-    control-plane: controller-manager
+    control-plane: dns-controller
 spec:
   selector:
     matchLabels:
-      control-plane: controller-manager
+      control-plane: dns-controller
   replicas: 1
   template:
     metadata:
       labels:
-        control-plane: controller-manager
+        control-plane: dns-controller
     spec:
       containers:
       - command:
         - /manager
         args:
-        - --enable-leader-election
-        image: controller:latest
+          - --enable-leader-election
+          - --dns-log
+          - --dns-forward=8.8.8.8
+        image: registry.gitlab.com/linka-cloud/k8s/dns:latest
         name: manager
+        ports:
+          - containerPort: 53
+            protocol: UDP
         resources:
           limits:
             cpu: 100m
@@ -37,3 +42,15 @@ spec:
             cpu: 100m
             memory: 20Mi
       terminationGracePeriodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: server
+spec:
+  selector:
+    control-plane: dns-controller
+  ports:
+  - port: 53
+    protocol: UDP
+  type: LoadBalancer
