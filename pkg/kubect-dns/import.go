@@ -16,9 +16,9 @@ import (
 
 var (
 	ImportCmd = &cobra.Command{
-		Use:          "import [file]",
-		Short:        "import dns bind file zone and print the DNSRecordList to stdout",
-		Example:      `
+		Use:   "import [file]",
+		Short: "import dns bind file zone and print the DNSRecordList to stdout",
+		Example: `
 	kubectl dns import example.org | kubectl apply -f -`,
 		Aliases:      []string{"convert"},
 		Args:         cobra.ExactArgs(1),

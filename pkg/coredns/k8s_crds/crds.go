@@ -2,6 +2,7 @@ package crds
 
 import (
 	"context"
+	"net"
 
 	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
@@ -24,13 +25,13 @@ func init() {
 }
 
 type CRDS struct {
-	Next       plugin.Handler
-	provider   Provider
-	hostmaster string
+	Next     plugin.Handler
+	provider Provider
+	external string
 }
 
-func New() (*CRDS, error) {
-	provider, err := NewProvider(context.Background())
+func New(external string) (*CRDS, error) {
+	provider, err := NewProvider(context.Background(), net.ParseIP(external))
 	if err != nil {
 		return nil, err
 	}
@@ -92,14 +93,22 @@ func (p *CRDS) Name() string {
 }
 
 func setup(c *caddy.Controller) error {
-	p, err := New()
+	var external string
+	for c.NextBlock() {
+		switch c.Val() {
+		case "external":
+			args := c.RemainingArgs()
+			if len(args) == 0 {
+				return c.ArgErr()
+			}
+			external = args[0]
+		default:
+			return c.Errf("unknown property '%s'", c.Val())
+		}
+	}
+	p, err := New(external)
 	if err != nil {
 		return plugin.Error(name, err)
-	}
-	for c.Next() {
-		if c.NextArg() {
-			return plugin.Error(name, c.ArgErr())
-		}
 	}
 	dnsserver.GetConfig(c).AddPlugin(func(next plugin.Handler) plugin.Handler {
 		p.Next = next

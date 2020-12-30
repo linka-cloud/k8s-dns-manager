@@ -1,7 +1,10 @@
 apiVersion: dns.linka.cloud/v1alpha1
 kind: DNSRecord
 metadata:
-  name: dnsrecord-sample
+  name: dns-google-com
+  namespace: default
 spec:
-  # Add fields here
-  foo: bar
+  a:
+    name: dns.google.com.
+    target: 8.8.8.8
+

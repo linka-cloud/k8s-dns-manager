@@ -21,7 +21,7 @@ var (
 		RunE: func(cmd *cobra.Command, args []string) error {
 			r, err := get(args[0])
 			if err != nil {
-			    return err
+				return err
 			}
 			if r.Spec.Active != nil && !*r.Spec.Active {
 				return nil

@@ -48,7 +48,7 @@ type provider struct {
 	apex       string
 }
 
-func NewProvider(ctx context.Context) (Provider, error) {
+func NewProvider(ctx context.Context, externalAddress net.IP) (Provider, error) {
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -66,10 +66,11 @@ func NewProvider(ctx context.Context) (Provider, error) {
 		zones: file.Zones{
 			Z: map[string]*file.Zone{},
 		},
-		records:    make(map[string]dns.RR),
-		hostmaster: defaultHostmaster,
-		ttl:        defaultTTL,
-		apex:       defaultApex,
+		records:         make(map[string]dns.RR),
+		hostmaster:      defaultHostmaster,
+		ttl:             defaultTTL,
+		apex:            defaultApex,
+		externalAddress: externalAddress,
 	}
 	return p, nil
 }
@@ -103,7 +104,7 @@ func (p *provider) sync() error {
 			merr = multierr.Append(merr, fmt.Errorf("malformed name: %s", v.Header().Name))
 			continue
 		}
-		zone := strings.Join(parts[len(parts)-2:], ".") + "."
+		zone := dns.Fqdn(strings.Join(parts[len(parts)-2:], "."))
 		zone = plugin.Name(zone).Normalize()
 		z, ok := p.zones.Z[zone]
 		if !ok {
@@ -129,11 +130,27 @@ func (p *provider) sync() error {
 				Minttl:  5,
 			}
 		}
-		if len(v.NS) == 0 {
-			header := dns.RR_Header{Name: k, Rrtype: dns.TypeNS, Ttl: p.ttl, Class: dns.ClassINET}
-			v.NS = append(v.NS, &dns.NS{Hdr: header, Ns: ns})
-			// TODO(adphi): insert A Record for NS
+		if len(v.NS) != 0 {
+			continue
 		}
+		header := dns.RR_Header{Name: k, Rrtype: dns.TypeNS, Ttl: p.ttl, Class: dns.ClassINET}
+		v.NS = append(v.NS, &dns.NS{Hdr: header, Ns: ns})
+		if p.externalAddress == nil {
+			continue
+		}
+		nsRecord := &dns.A{
+			Hdr: dns.RR_Header{
+				Name:   ns,
+				Rrtype: dns.TypeA,
+				Class:  dns.ClassINET,
+				Ttl:    p.ttl,
+			},
+			A: p.externalAddress,
+		}
+		if err := v.Insert(nsRecord); err != nil {
+			return err
+		}
+
 	}
 	return merr
 }
@@ -156,7 +173,7 @@ func (p *provider) Run() error {
 			}
 			log.Info("adding record", "record", rr.String())
 			p.mu.Lock()
-			p.records[fmt.Sprintf("%s:%d", rr.Header().Name, rr.Header().Rrtype)] = rr
+			p.records[rr.String()] = rr
 			p.mu.Unlock()
 			if err := p.sync(); err != nil {
 				log.Error(err, "zones sync had errors")
@@ -175,10 +192,10 @@ func (p *provider) Run() error {
 			}
 			log.Info("deleting record", "old", oldRR.String())
 			p.mu.Lock()
-			delete(p.records, fmt.Sprintf("%s:%d", oldRR.Header().Name, oldRR.Header().Rrtype))
+			delete(p.records, oldRR.String())
 			if ptr.ToBoolD(r.Spec.Active, true) {
 				log.Info("adding record", "new", newRR.String())
-				p.records[fmt.Sprintf("%s:%d", newRR.Header().Name, newRR.Header().Rrtype)] = newRR
+				p.records[newRR.String()] = newRR
 			} else {
 				log.Info("skip adding inactive record", "record", newRR.String())
 			}
@@ -195,7 +212,7 @@ func (p *provider) Run() error {
 			}
 			log.Info("deleting record", "record", rr.String())
 			p.mu.Lock()
-			delete(p.records, fmt.Sprintf("%s:%d", rr.Header().Name, rr.Header().Rrtype))
+			delete(p.records, rr.String())
 			p.mu.Unlock()
 			if err := p.sync(); err != nil {
 				log.Error(err, "zones sync had errors")

@@ -17,9 +17,9 @@ limitations under the License.
 package main
 
 import (
-	"flag"
 	"os"
 
+	flag "github.com/spf13/pflag"
 	zap2 "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -31,6 +31,7 @@ import (
 	dnsv1alpha1 "go.linka.cloud/k8s/dns/api/v1alpha1"
 	"go.linka.cloud/k8s/dns/controllers"
 	"go.linka.cloud/k8s/dns/pkg/coredns"
+	"go.linka.cloud/k8s/dns/pkg/coredns/config"
 	// +kubebuilder:scaffold:imports
 )
 
@@ -49,10 +50,21 @@ func init() {
 func main() {
 	var metricsAddr string
 	var enableLeaderElection bool
+	var noDNSServer bool
+	var dnsLog bool
+	var dnsForward []string
+	var dnsMetrics bool
+	var externalAddress string
+
 	flag.StringVar(&metricsAddr, "metrics-addr", ":8080", "The address the metric endpoint binds to.")
 	flag.BoolVar(&enableLeaderElection, "enable-leader-election", false,
 		"Enable leader election for controller manager. "+
 			"Enabling this will ensure there is only one active controller manager.")
+	flag.BoolVar(&noDNSServer, "no-dns", false, "do not run in process coredns server")
+	flag.BoolVar(&dnsLog, "dns-log", false, "enable coredns query logs")
+	flag.StringSliceVar(&dnsForward, "dns-forward", nil, "dns forward servers")
+	flag.BoolVar(&dnsMetrics, "dns-metrics", false, "enable coredns metrics")
+	flag.StringVarP(&externalAddress, "external-address", "a", "127.0.0.1", "the external dns server address, e.g the loadbalancer service IP")
 	flag.Parse()
 
 	ctrl.SetLogger(zap.New(zap.UseDevMode(true), zap.StacktraceLevel(zap2.NewAtomicLevelAt(zapcore.FatalLevel))))
@@ -83,7 +95,20 @@ func main() {
 	// }
 	// +kubebuilder:scaffold:builder
 
-	go coredns.Run("")
+	if !noDNSServer {
+		conf, err := config.Config{
+			Forward: dnsForward,
+			Log:     dnsLog,
+			Errors:  true,
+			Metrics: dnsMetrics,
+		}.Render()
+		setupLog.Info("coredns config", "corefile", conf)
+		if err != nil {
+			setupLog.Error(err, "failed to configure coredns server")
+			os.Exit(1)
+		}
+		go coredns.Run(conf)
+	}
 
 	setupLog.Info("starting manager")
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
