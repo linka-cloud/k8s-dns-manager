@@ -12,6 +12,7 @@ import (
 	"github.com/coredns/coredns/plugin/file"
 	"github.com/coredns/coredns/plugin/pkg/dnsutil"
 	"github.com/miekg/dns"
+	"github.com/weppos/publicsuffix-go/publicsuffix"
 	"go.uber.org/multierr"
 	"k8s.io/client-go/kubernetes/scheme"
 	clientgoscheme "k8s.io/client-go/kubernetes/scheme"
@@ -104,7 +105,12 @@ func (p *provider) sync() error {
 			merr = multierr.Append(merr, fmt.Errorf("malformed name: %s", v.Header().Name))
 			continue
 		}
-		zone := dns.Fqdn(strings.Join(parts[len(parts)-2:], "."))
+		d, err := publicsuffix.Domain(strings.Join(parts, "."))
+		if err != nil {
+			log.Error(err, "parse domain", "domain", v.Header().Name)
+			continue
+		}
+		zone := dns.Fqdn(d)
 		zone = plugin.Name(zone).Normalize()
 		z, ok := p.zones.Z[zone]
 		if !ok {
