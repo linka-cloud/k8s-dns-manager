@@ -24,7 +24,7 @@ spec:
     spec:
       containers:
       - command:
-        - /manager
+        - /k8s-dns
         args:
           - --enable-leader-election
           - --dns-log

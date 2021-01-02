@@ -16,7 +16,7 @@ func TestConfig(t *testing.T) {
 			config: Config{},
 			want: `
 .:53 {
-	k8s_crds
+	k8s_dns
 }
 `,
 		},
@@ -27,7 +27,7 @@ func TestConfig(t *testing.T) {
 			},
 			want: `
 .:53 {
-	k8s_crds
+	k8s_dns
 	forward . 8.8.8.8 8.8.4.4 
 	prometheus
 }
@@ -43,7 +43,7 @@ func TestConfig(t *testing.T) {
 			},
 			want: `
 .:53 {
-	k8s_crds
+	k8s_dns
 	forward . 8.8.8.8 8.8.4.4 
 	cache 300
 	log
