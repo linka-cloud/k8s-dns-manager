@@ -50,6 +50,7 @@ metadata:
 spec:
   selector:
     control-plane: dns-controller
+  externalTrafficPolicy: Local
   ports:
   - port: 53
     protocol: UDP

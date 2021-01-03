@@ -189,7 +189,7 @@ func (p *provider) Run() error {
 				log.Error(err, "add func handler failed")
 				return
 			}
-			if ptr.ToBoolD(r.Spec.Active, true) {
+			if !ptr.ToBoolD(r.Spec.Active, true) {
 				log.Info("skip adding inactive record", "record", rr.String())
 				return
 			}
