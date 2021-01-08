@@ -26,7 +26,7 @@ metadata:
   namespace: default
 spec:
   mx:
-    name: example.org
+    name: example.org.
     preference: 10
     target: mail.example.org
 ```
