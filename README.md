@@ -1,6 +1,13 @@
 # Kubernetes DNS Operator
 
-The DNS Operator define a new resource: DNSRecord.
+**Project status: *alpha*** 
+Not all planned features are completed. 
+The API, spec, status and other user facing objects are subject to change. 
+We do not support backward-compatibility for the alpha releases.
+
+## Overview
+
+The DNS Operator allows managing DNS record directly from within a Kubernetes cluster by defining a new resource: DNSRecord.
 This resource is then used the CoreDNS k8s_dns plugin to serve the records stored inside Kubernetes.
 
 The supported records types are:
@@ -10,6 +17,20 @@ The supported records types are:
 - SRV
 - MX
 
+Example MX Record:
+```yaml
+apiVersion: dns.linka.cloud/v1alpha1
+kind: DNSRecord
+metadata:
+  name: ns-example-org
+  namespace: default
+spec:
+  mx:
+    name: example.org
+    preference: 10
+    target: mail.example.org
+```
+
 For everything else the `raw` field allows to create any kind of record, including the supported ones.
 Raw records are parsed using [miekg/dns](https://godoc.org/github.com/miekg/dns).
 
@@ -18,11 +39,34 @@ Example:
 apiVersion: dns.linka.cloud/v1alpha1
 kind: DNSRecord
 metadata:
-  name: dns-google-com
+  name: ns-example-org
   namespace: default
 spec:
   raw: 'example.org ns ns0.dns.example.org'
 ```
+
+## Installing
+
+The operator can be run with or without defaulting and validation webhook:
+
+- **Without webhook**:
+
+    ```bash
+    kubectl apply -f ./deploy/default/k8s-dns.yaml
+    ```
+
+- **With webhook** (requires Cert-Manager to be installed in the cluster):
+    ```bash
+    kubectl apply -f ./deploy/with-webhook/k8s-dns.yaml
+    ```
+
+*Note*:
+In order to be available from outside the cluster, a LoadBalancer service is deployed with the operator.
+The LoadBalancer external IP must be given to the operator by updating the deployment 
+and setting the operator's `--external-address` flag.
+
+Finally, change the nameservers in the DNS registrar console, so they point to the operator's 
+coredns server.
 
 ## Operator
 

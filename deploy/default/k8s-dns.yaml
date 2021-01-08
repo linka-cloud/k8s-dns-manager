@@ -1,4 +1,9 @@
-
+apiVersion: v1
+kind: Namespace
+metadata:
+  labels:
+    control-plane: dns-controller
+  name: dns-system
 ---
 apiVersion: apiextensions.k8s.io/v1beta1
 kind: CustomResourceDefinition
@@ -33,14 +38,10 @@ spec:
       description: DNSRecord is the Schema for the dnsrecord API
       properties:
         apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+          description: 'APIVersion defines the versioned schema of this representation of an object. Servers should convert recognized schemas to the latest internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
           type: string
         kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+          description: 'Kind is a string value representing the REST resource this object represents. Servers may infer this from the endpoint the client submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
           type: string
         metadata:
           type: object
@@ -96,8 +97,7 @@ spec:
               - name
               type: object
             raw:
-              description: Raw is a  RFC 1035 style record string that github.com/miekg/dns
-                will try to parse
+              description: Raw is a  RFC 1035 style record string that github.com/miekg/dns will try to parse
               type: string
             srv:
               properties:
@@ -156,3 +156,155 @@ status:
     plural: ""
   conditions: []
   storedVersions: []
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: dns-leader-election-role
+  namespace: dns-system
+rules:
+- apiGroups:
+  - coordination.k8s.io
+  resources:
+  - leases
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - configmaps
+  verbs:
+  - get
+  - list
+  - watch
+  - create
+  - update
+  - patch
+  - delete
+- apiGroups:
+  - ""
+  resources:
+  - configmaps/status
+  verbs:
+  - get
+  - update
+  - patch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: dns-manager-role
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - events
+  verbs:
+  - create
+  - patch
+- apiGroups:
+  - dns.linka.cloud
+  resources:
+  - dnsrecord
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - dns.linka.cloud
+  resources:
+  - dnsrecord/status
+  verbs:
+  - get
+  - patch
+  - update
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: dns-leader-election-rolebinding
+  namespace: dns-system
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: dns-leader-election-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: dns-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: dns-manager-rolebinding
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: dns-manager-role
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: dns-system
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dns-server
+  namespace: dns-system
+spec:
+  externalTrafficPolicy: Local
+  ports:
+  - port: 53
+    protocol: UDP
+  selector:
+    control-plane: dns-controller
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: dns-controller
+  name: dns-controller-manager
+  namespace: dns-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: dns-controller
+  template:
+    metadata:
+      labels:
+        control-plane: dns-controller
+    spec:
+      containers:
+      - args:
+        - --enable-leader-election
+        - --dns-log
+        - --dns-forward=8.8.8.8
+        command:
+        - /k8s-dns
+        image: registry.gitlab.com/linka-cloud/k8s/dns:latest
+        name: manager
+        ports:
+        - containerPort: 53
+          protocol: UDP
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+            memory: 20Mi
+      terminationGracePeriodSeconds: 10

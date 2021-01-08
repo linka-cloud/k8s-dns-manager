@@ -27,7 +27,7 @@ type DNSRecordSpec struct {
 	CNAME  *CNAMERecord `json:"cname,omitempty"`
 	TXT    *TXTRecord   `json:"txt,omitempty"`
 	SRV    *SRVRecord   `json:"srv,omitempty"`
-	MX     *MXRecord    `json:"rx,omitempty"`
+	MX     *MXRecord    `json:"mx,omitempty"`
 	// Raw is a  RFC 1035 style record string that github.com/miekg/dns will try to parse
 	// +optional
 	Raw string `json:"raw,omitempty"`
@@ -58,7 +58,8 @@ type DNSRecord struct {
 type CNAMERecord struct {
 	Name string `json:"name"`
 	// +optional
-	Class  uint16 `json:"class,omitempty"`
+	Class uint16 `json:"class,omitempty"`
+	// +optional
 	Ttl    uint32 `json:"ttl"`
 	Target string `json:"target"`
 }
