@@ -8,3 +8,14 @@ spec:
     name: dns.google.com.
     target: 8.8.8.8
 
+---
+apiVersion: dns.linka.cloud/v1alpha1
+kind: DNSRecord
+metadata:
+  name: google-fail-me
+  namespace: default
+spec:
+  a:
+    name: dns.google.com
+    target: 8.8.8.8
+

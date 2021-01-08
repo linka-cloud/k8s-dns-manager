@@ -46,7 +46,7 @@ type DNSRecordStatus struct {
 // +kubebuilder:printcolumn:name="Active",type=boolean,JSONPath=`.status.active`
 // +kubebuilder:printcolumn:name="Record",type=string,JSONPath=`.status.record`
 
-// DNSRecord is the Schema for the dnsrecords API
+// DNSRecord is the Schema for the dnsrecord API
 type DNSRecord struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`
@@ -67,7 +67,8 @@ type ARecord struct {
 	Name string `json:"name"`
 	// +optional
 	Class uint16 `json:"class,omitempty"`
-	Ttl   uint32 `json:"ttl"`
+	// +optional
+	Ttl uint32 `json:"ttl"`
 	// TODO(adphi): support service, e.g. default/kubernetes
 	Target string `json:"target,omitempty"`
 }
@@ -75,7 +76,8 @@ type ARecord struct {
 type TXTRecord struct {
 	Name string `json:"name"`
 	// +optional
-	Class   uint16   `json:"class,omitempty"`
+	Class uint16 `json:"class,omitempty"`
+	// +optional
 	Ttl     uint32   `json:"ttl"`
 	Targets []string `json:"targets,omitempty"`
 }
@@ -84,7 +86,8 @@ type SRVRecord struct {
 	Name string `json:"name"`
 	// +optional
 	Class uint16 `json:"class,omitempty"`
-	Ttl   uint32 `json:"ttl"`
+	// +optional
+	Ttl uint32 `json:"ttl"`
 	// +optional
 	Priority uint16 `json:"priority,omitempty"`
 	// +optional
@@ -97,7 +100,8 @@ type MXRecord struct {
 	Name string `json:"name"`
 	// +optional
 	Class uint16 `json:"class,omitempty"`
-	Ttl   uint32 `json:"ttl"`
+	// +optional
+	Ttl uint32 `json:"ttl"`
 	// +optional
 	Preference uint16 `json:"preference,omitempty"`
 	Target     string `json:"target,omitempty"`

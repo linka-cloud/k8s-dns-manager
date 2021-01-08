@@ -150,17 +150,17 @@ func (r *DNSRecord) validate() error {
 
 func (r ARecord) validate() (errs field.ErrorList) {
 	if !strings.HasSuffix(r.Name, ".") {
-		errs = append(errs, field.Invalid(field.NewPath("spec").Child("a").Child("name"), r.Name, "must be an absolute dns name (should ends with a dot)"))
+		errs = append(errs, field.Invalid(field.NewPath("spec").Child("a").Child("name"), r.Name, "name must be an absolute dns name (should ends with a dot)"))
 	}
 	ip := net.ParseIP(r.Target)
 	if ip == nil || r.Target == "" {
-		errs = append(errs, field.Invalid(field.NewPath("spec").Child("a").Child("target"), r.Target, "A Record: a must be a valid ip address"))
+		errs = append(errs, field.Invalid(field.NewPath("spec").Child("a").Child("target"), r.Target, "A Record: target must be a valid ip address"))
 	}
 	return
 }
 func (r CNAMERecord) validate() (errs field.ErrorList) {
 	if !strings.HasSuffix(r.Name, ".") {
-		errs = append(errs, field.Invalid(field.NewPath("spec").Child("cname").Child("name"), r.Name, "must be an absolute dns name (should ends with a dot)"))
+		errs = append(errs, field.Invalid(field.NewPath("spec").Child("cname").Child("name"), r.Name, "name must be an absolute dns name (should ends with a dot)"))
 	}
 	if r.Target == "" {
 		errs = append(errs, field.Invalid(field.NewPath("spec").Child("cname").Child("target"), r.Target, "SRV record: target is required"))
@@ -169,10 +169,10 @@ func (r CNAMERecord) validate() (errs field.ErrorList) {
 }
 func (r TXTRecord) validate() (errs field.ErrorList) {
 	if !strings.HasSuffix(r.Name, ".") {
-		errs = append(errs, field.Invalid(field.NewPath("spec").Child("txt").Child("name"), r.Name, "must be an absolute dns name (should ends with a dot)"))
+		errs = append(errs, field.Invalid(field.NewPath("spec").Child("txt").Child("name"), r.Name, "name must be an absolute dns name (should ends with a dot)"))
 	}
 	if len(r.Targets) == 0 {
-		errs = append(errs, field.Invalid(field.NewPath("spec").Child("txt").Child("targets"), r.Targets, "TXT Record: txt cannot be empty"))
+		errs = append(errs, field.Invalid(field.NewPath("spec").Child("txt").Child("targets"), r.Targets, "TXT Record: target cannot be empty"))
 	}
 	return
 }
@@ -190,7 +190,7 @@ func (r MXRecord) validate() (errs field.ErrorList) {
 		errs = append(errs, field.Invalid(field.NewPath("spec").Child("mx").Child("name"), r.Name, "must be an absolute dns name (should ends with a dot)"))
 	}
 	if r.Target == "" {
-		errs = append(errs, field.Invalid(field.NewPath("spec").Child("cname").Child("target"), r.Target, "MX Record: mx cannot be empty"))
+		errs = append(errs, field.Invalid(field.NewPath("spec").Child("cname").Child("target"), r.Target, "MX Record: target cannot be empty"))
 	}
 	return
 }

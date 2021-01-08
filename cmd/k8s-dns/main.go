@@ -76,6 +76,7 @@ var (
 			}
 
 			if enableWebhook {
+				setupLog.Info("registering webhook")
 				if err = (&dnsv1alpha1.DNSRecord{}).SetupWebhookWithManager(mgr); err != nil {
 					setupLog.Error(err, "unable to create webhook", "webhook", "DNSRecord")
 					os.Exit(1)
@@ -95,6 +96,7 @@ var (
 					setupLog.Error(err, "failed to configure coredns server")
 					os.Exit(1)
 				}
+				setupLog.Info("starting dns server")
 				go coredns.Run(conf)
 			}
 

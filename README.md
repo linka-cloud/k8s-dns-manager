@@ -33,7 +33,7 @@ By default, the manifests include a Kubernetes LoadBalancer Service exposing the
 `udp` port: 53.
 
 ## k8s_dns CoreDNS Plugin
-The `k8s_dns` plugin serve the `DNSRecords` and ensure that valid dns apex are served if not defined via `DNSRecord`:
+The `k8s_dns` plugin serve the `DNSRecord` and ensure that valid dns apex are served if not defined via `DNSRecord`:
 - it generates a valid `NS` record for each dns records zones (e.g ns0.dns.example.org)
 - it generates a valid `SOA` record for each dns records zones
 

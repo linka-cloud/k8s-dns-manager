@@ -1,4 +1,4 @@
-# permissions for end users to view dnsrecords.
+# permissions for end users to view dnsrecord.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -7,7 +7,7 @@ rules:
 - apiGroups:
   - dns.linka.cloud
   resources:
-  - dnsrecords
+  - dnsrecord
   verbs:
   - get
   - list
@@ -15,6 +15,6 @@ rules:
 - apiGroups:
   - dns.linka.cloud
   resources:
-  - dnsrecords/status
+  - dnsrecord/status
   verbs:
   - get
