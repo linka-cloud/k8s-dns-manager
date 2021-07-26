@@ -1,4 +1,4 @@
-# Kubernetes DNS Operator
+# Kubernetes DNS Manager
 
 **Project status: *alpha*** 
 Not all planned features are completed. 
