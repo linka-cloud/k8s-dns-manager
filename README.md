@@ -136,6 +136,14 @@ Use "dns [command] --help" for more information about a command.
 
 ```
 
+## Cert-Manager DNS Challenges Webhook
+
+See [cert-manager-webhook-k8s-dns](https://github.com/linka-cloud/cert-manager-webhook-k8s-dns).
+
+## Related Projects
+
+- [Kubernetes ExternalDNS](https://github.com/kubernetes-sigs/external-dns)
+- [Gardener External DNS Management](https://github.com/gardener/external-dns-management)
 
 ## TODOs:
 - [ ] docs
