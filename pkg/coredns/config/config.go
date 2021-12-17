@@ -57,7 +57,7 @@ var configTemplate = template.Must(template.New("corefile").Parse(`
 	errors
 {{- end }}
 {{- if .Metrics }}
-	prometheus
+	prometheus 0.0.0.0:9153
 {{- end }}
 }
 `))

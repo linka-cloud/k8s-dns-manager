@@ -29,7 +29,7 @@ func TestConfig(t *testing.T) {
 .:53 {
 	k8s_dns
 	forward . 8.8.8.8 8.8.4.4 
-	prometheus
+	prometheus 0.0.0.0:9153
 }
 `,
 		},
@@ -50,7 +50,7 @@ func TestConfig(t *testing.T) {
 	cache 300
 	log
 	errors
-	prometheus
+	prometheus 0.0.0.0:9153
 }
 `,
 		},
