@@ -40,10 +40,12 @@ func TestConfig(t *testing.T) {
 				Errors:  true,
 				Log:     true,
 				Cache:   300,
+				Any:     true,
 			},
 			want: `
 .:53 {
 	k8s_dns
+	any
 	forward . 8.8.8.8 8.8.4.4 
 	cache 300
 	log

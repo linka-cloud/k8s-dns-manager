@@ -27,6 +27,7 @@ type Config struct {
 	Errors  bool
 	Metrics bool
 	Cache   int
+	Any     bool
 }
 
 func (c Config) Render() (string, error) {
@@ -40,6 +41,9 @@ func (c Config) Render() (string, error) {
 var configTemplate = template.Must(template.New("corefile").Parse(`
 .:53 {
 	k8s_dns
+{{- if .Any }}
+	any
+{{- end }}
 {{- if .Forward }}
 	forward . {{ range $val := .Forward }}{{ $val }} {{ end }}
 {{- end }}

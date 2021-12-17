@@ -46,6 +46,7 @@ var (
 	dnsForward           []string
 	dnsMetrics           bool
 	dnsCache             int
+	dnsAny               bool
 	externalAddress      string
 
 	Root = &cobra.Command{
@@ -90,6 +91,7 @@ var (
 					Errors:  true,
 					Cache:   dnsCache,
 					Metrics: dnsMetrics,
+					Any:     dnsAny,
 				}.Render()
 				setupLog.Info("coredns config", "corefile", conf)
 				if err != nil {
@@ -122,6 +124,7 @@ func init() {
 	Root.Flags().BoolVar(&dnsLog, "dns-log", false, "Enable coredns query logs")
 	Root.Flags().StringSliceVar(&dnsForward, "dns-forward", nil, "Dns forward servers")
 	Root.Flags().BoolVar(&dnsMetrics, "dns-metrics", false, "Enable coredns metrics")
+	Root.Flags().BoolVar(&dnsAny, "dns-any", false, "Enable coredns 'any' plugin")
 	Root.Flags().IntVar(&dnsCache, "dns-cache", 0, "Enable coredns cache with ttl (in seconds)")
 	Root.Flags().StringVarP(&externalAddress, "external-address", "a", "127.0.0.1", "The external dns server address, e.g the loadbalancer service IP")
 }
