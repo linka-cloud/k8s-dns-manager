@@ -1,6 +1,6 @@
 VERSION := $(shell git describe --tags $(git rev-list --tags --max-count=1))
 # Image URL to use all building/pushing image targets
-IMG ?= registry.gitlab.com/linka-cloud/k8s/dns:$(VERSION)
+IMG ?= linkacloud/k8s-dns-manager:$(VERSION)
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true"
 

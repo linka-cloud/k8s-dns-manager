@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  labels:
+    control-plane: dns-controller
+  name: k8s-dns-manager-coredns
+  namespace: monitoring
+spec:
+  endpoints:
+  - interval: 15s
+    port: metrics
+  jobLabel: control-plane
+  namespaceSelector:
+    matchNames:
+    - dns-system
+  selector:
+    matchLabels:
+      control-plane: dns-controller

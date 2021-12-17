@@ -317,7 +317,7 @@ spec:
         - --enable-webhook
         command:
         - /k8s-dns
-        image: registry.gitlab.com/linka-cloud/k8s/dns:latest
+        image: linkacloud/k8s-dns-manager:latest
         name: manager
         ports:
         - containerPort: 9443

@@ -29,7 +29,7 @@ spec:
           - --enable-leader-election
           - --dns-log
           - --dns-forward=8.8.8.8
-        image: registry.gitlab.com/linka-cloud/k8s/dns:latest
+        image: linkacloud/k8s-dns-manager:latest
         name: manager
         ports:
           - containerPort: 53
