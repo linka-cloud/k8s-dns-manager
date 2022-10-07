@@ -148,23 +148,20 @@ func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		log.Error(err, "lookup failed")
 		return ctrl.Result{}, err
 	}
+	state := recordState(ok)
 	if ptr.ToBoolD(rec.Status.Active, false) != ok {
 		log.Info("updating record status", "active", ok)
 		rec.Status.Active = ptr.Bool(ok)
+		if !ok {
+			r.recorder.Warn(&rec, "Warning", fmt.Sprintf("record %s", state))
+		}
 		if err := r.Status().Update(ctx, &rec); err != nil {
 			log.Error(err, "update status")
 			return ctrl.Result{}, err
 		}
 		return ctrl.Result{}, nil
 	}
-	var state string
-	if ok {
-		state = "active"
-	} else {
-		state = "inactive"
-	}
 	if ptr.ToBoolD(rec.Spec.Active, true) != ok {
-		r.recorder.Warn(&rec, "Warning", fmt.Sprintf("record %s", state))
 		log.Info("status does not match desired state", "desired", *rec.Spec.Active, "actual", ok)
 		return ctrl.Result{RequeueAfter: time.Second}, nil
 	}
@@ -243,4 +240,11 @@ func removeFinalizer(r *dnsv1alpha1.DNSRecord) bool {
 		return true
 	}
 	return false
+}
+
+func recordState(ok bool) string {
+	if ok {
+		return "active"
+	}
+	return "inactive"
 }

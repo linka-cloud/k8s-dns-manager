@@ -720,8 +720,8 @@ github.com/libdns/libdns v0.2.2-0.20221006221142-3ef90aee33fd h1:SyZBFgMczGjPf5V
 github.com/libdns/libdns v0.2.2-0.20221006221142-3ef90aee33fd/go.mod h1:4Bj9+5CQiNMVGf87wjX4CY3HQJypUHRuLvlsfsZqLWQ=
 github.com/libdns/ovh v0.0.1 h1:iTw/pNviAjgQaTBfqrSV5lt9wlFMEhm148xM3dybqdo=
 github.com/libdns/ovh v0.0.1/go.mod h1:aHw4ZIXIFjj7ymAZ0NLXLHFtk9ObybG5IWMupc3ruHg=
-github.com/libdns/scaleway v0.1.0 h1:/VoA7vmOOb0+J6lmt0lfYj6F6UHvbf3qD2qY8Joe3fE=
-github.com/libdns/scaleway v0.1.0/go.mod h1:zLKk7QRsQg8NigBP9cVVL59BfSeyic2PJ0JCoeW0sYA=
+github.com/libdns/scaleway v0.1.1 h1:yNekqng9pGfLeiXyxnnIwx/S1ihQPsPmlOt59I5c/Rc=
+github.com/libdns/scaleway v0.1.1/go.mod h1:zLKk7QRsQg8NigBP9cVVL59BfSeyic2PJ0JCoeW0sYA=
 github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de h1:9TO3cAIGXtEhnIaL+V+BEER86oLrvS+kWobKpbJuye0=
 github.com/liggitt/tabwriter v0.0.0-20181228230101-89fcab3d43de/go.mod h1:zAbeS9B/r2mtpb6U+EI2rYA5OAXxsYw6wTamcNW+zcE=
 github.com/linka-cloud/cloudflare v0.0.0-20221007092341-f65599da475a h1:oPb+NznXUSYwevpK+Geiasl2uhaw9ytOonu7magSh2g=
