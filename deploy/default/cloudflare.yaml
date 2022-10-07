@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: cloudflare-credentials
+  namespace: dns-system
+type: Opaque
+stringData:
+  CLOUDFLARE_TOKEN: "YOUR_CLOUDFLARE_TOKEN"
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: dns-controller
+  name: dns-controller-manager
+  namespace: dns-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: dns-controller
+  template:
+    metadata:
+      labels:
+        control-plane: dns-controller
+    spec:
+      containers:
+      - args:
+        - --enable-leader-election
+        - --provider=cloudflare
+        command:
+        - /k8s-dns
+        image: linkacloud/k8s-dns-manager:latest
+        name: manager
+        envFrom:
+        - secretRef:
+            name: cloudflare-credentials
+        ports:
+        - containerPort: 53
+          protocol: UDP
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+            memory: 20Mi
+      terminationGracePeriodSeconds: 10

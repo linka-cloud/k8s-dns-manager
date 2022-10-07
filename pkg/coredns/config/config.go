@@ -22,12 +22,13 @@ import (
 )
 
 type Config struct {
-	Forward []string
-	Log     bool
-	Errors  bool
-	Metrics bool
-	Cache   int
-	Any     bool
+	Forward         []string
+	Log             bool
+	Errors          bool
+	Metrics         bool
+	Cache           int
+	Any             bool
+	ExternalAddress string
 }
 
 func (c Config) Render() (string, error) {
@@ -40,7 +41,7 @@ func (c Config) Render() (string, error) {
 
 var configTemplate = template.Must(template.New("corefile").Parse(`
 .:53 {
-	k8s_dns
+	k8s_dns{{- if .ExternalAddress }} {{ .ExternalAddress }}{{- end }}
 {{- if .Any }}
 	any
 {{- end }}

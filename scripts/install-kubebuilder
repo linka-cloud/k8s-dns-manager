@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+mkdir -p bin
+curl -L -o kubebuilder https://go.kubebuilder.io/dl/latest/$(go env GOOS)/$(go env GOARCH)
+chmod +x kubebuilder && mv kubebuilder bin/
+export PATH=$(pwd)/bin:$PATH

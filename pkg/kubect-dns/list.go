@@ -24,6 +24,7 @@ import (
 
 	"github.com/ryanuber/columnize"
 	"github.com/spf13/cobra"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
 	client2 "sigs.k8s.io/controller-runtime/pkg/client"
 
 	"go.linka.cloud/k8s/dns/api/v1alpha1"
@@ -39,7 +40,11 @@ var (
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			var l v1alpha1.DNSRecordList
-			if err := client.List(context.Background(), &l, client2.InNamespace(ns)); err != nil {
+			var opts []client2.ListOption
+			if a, _ := cmd.Flags().GetBool("all-namespaces"); !a {
+				opts = append(opts, client2.InNamespace(ns))
+			}
+			if err := client.List(context.Background(), &l, opts...); err != nil {
 				return err
 			}
 			if len(l.Items) == 0 {
@@ -70,5 +75,5 @@ var (
 func init() {
 	RootCmd.AddCommand(ListCmd)
 	ListCmd.Flags().BoolVarP(&quiet, "quiet", "q", false, "display only names")
-	configFlags.AddFlags(ListCmd.Flags())
+	genericclioptions.NewResourceBuilderFlags().AddFlags(ListCmd.Flags())
 }

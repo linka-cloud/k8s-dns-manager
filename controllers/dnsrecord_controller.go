@@ -19,6 +19,7 @@ package controllers
 import (
 	"context"
 	"fmt"
+	"sync"
 	"time"
 
 	"github.com/go-logr/logr"
@@ -30,6 +31,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/controller"
 
 	dnsv1alpha1 "go.linka.cloud/k8s/dns/api/v1alpha1"
+	"go.linka.cloud/k8s/dns/pkg/provider"
 	"go.linka.cloud/k8s/dns/pkg/ptr"
 	"go.linka.cloud/k8s/dns/pkg/record"
 	"go.linka.cloud/k8s/dns/pkg/recorder"
@@ -42,10 +44,13 @@ const (
 // DNSRecordReconciler reconciles a DNSRecord object
 type DNSRecordReconciler struct {
 	client.Client
-	Log       logr.Logger
-	Scheme    *runtime.Scheme
-	recorder  recorder.Recorder
-	dnsClient *dns.Client
+	Log                   logr.Logger
+	Scheme                *runtime.Scheme
+	recorder              recorder.Recorder
+	Provider              provider.Provider
+	DNSVerificationServer string
+	mu                    sync.Mutex
+	locks                 map[string]*sync.Mutex
 }
 
 // +kubebuilder:rbac:groups=dns.linka.cloud,resources=dnsrecord,verbs=get;list;watch;create;update;patch;delete
@@ -54,7 +59,21 @@ type DNSRecordReconciler struct {
 
 func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	log := r.Log.WithValues("dnsrecord", req.NamespacedName)
+	ctx = ctrl.LoggerInto(ctx, log)
 	log.V(2).Info("new request")
+	// prevent concurrent reconcile on the same resource
+	var (
+		mu *sync.Mutex
+		ok bool
+	)
+	r.mu.Lock()
+	if mu, ok = r.locks[req.NamespacedName.String()]; !ok {
+		mu = &sync.Mutex{}
+		r.locks[req.NamespacedName.String()] = mu
+	}
+	r.mu.Unlock()
+	mu.Lock()
+	defer mu.Unlock()
 	var rec dnsv1alpha1.DNSRecord
 	if err := r.Get(ctx, req.NamespacedName, &rec); err != nil {
 		if apierrors.IsNotFound(err) {
@@ -75,7 +94,18 @@ func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	if !rec.DeletionTimestamp.IsZero() {
 		log.Info("record marked for deletion: deleting")
-		// TODO(adphi): update SOA Record
+		o := rec.DeepCopy()
+		if r, ok, err := r.Provider.Reconcile(ctx, &rec); !ok {
+			return r, err
+		}
+		if rec.Status.Provider != o.Status.Provider || rec.Status.ID != o.Status.ID {
+			log.Info("updating record status")
+			if err := r.Status().Update(ctx, &rec); err != nil {
+				log.Error(err, "update status")
+				return ctrl.Result{}, err
+			}
+			return ctrl.Result{}, nil
+		}
 		if ok := removeFinalizer(&rec); !ok {
 			return ctrl.Result{}, nil
 		}
@@ -95,7 +125,16 @@ func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, nil
 	}
 
-	if rec.Status.Record != rr.String() {
+	o := rec.DeepCopy()
+	if r, ok, err := r.Provider.Reconcile(ctx, &rec); !ok {
+		if err != nil {
+			log.Error(err, "reconcile record")
+		}
+		return r, err
+	}
+
+	raw := rr.String()
+	if rec.Status.Provider != o.Status.Provider || rec.Status.ID != o.Status.ID || rec.Status.Record != raw {
 		log.Info("updating record status")
 		rec.Status.Record = rr.String()
 		if err := r.Status().Update(ctx, &rec); err != nil {
@@ -104,8 +143,8 @@ func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		}
 		return ctrl.Result{}, nil
 	}
-	ok, err := r.lookup(ctx, rr)
-	if err != nil {
+
+	if ok, err = r.lookup(ctx, rr); err != nil {
 		log.Error(err, "lookup failed")
 		return ctrl.Result{}, err
 	}
@@ -134,8 +173,8 @@ func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 }
 
 func (r *DNSRecordReconciler) SetupWithManager(mgr ctrl.Manager) error {
-	r.dnsClient = new(dns.Client)
 	r.recorder = recorder.New(mgr.GetEventRecorderFor("DNSRecord"))
+	r.locks = make(map[string]*sync.Mutex)
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&dnsv1alpha1.DNSRecord{}).
 		WithOptions(controller.Options{MaxConcurrentReconciles: 8}).
@@ -156,14 +195,24 @@ func (r *DNSRecordReconciler) lookup(ctx context.Context, rr dns.RR) (bool, erro
 	}
 	ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
-	res, _, err := r.dnsClient.ExchangeContext(ctx, q, "127.0.0.1:53")
+	var (
+		res *dns.Msg
+		err error
+	)
+	for _, v := range []string{"udp", "tcp"} {
+		c := &dns.Client{Net: v}
+		res, _, err = c.ExchangeContext(ctx, q, r.DNSVerificationServer)
+		if err != nil {
+			continue
+		}
+		if res.Truncated {
+			continue
+		}
+		break
+	}
 	if err != nil {
 		return false, err
 	}
-	if len(res.Answer) == 0 {
-		return false, nil
-	}
-	// TODO(adphi): check response
 	for _, v := range res.Answer {
 		if dns.IsDuplicate(v, rr) {
 			return true, nil

@@ -28,15 +28,17 @@ type DNSRecordSpec struct {
 	TXT    *TXTRecord   `json:"txt,omitempty"`
 	SRV    *SRVRecord   `json:"srv,omitempty"`
 	MX     *MXRecord    `json:"mx,omitempty"`
-	// Raw is a  RFC 1035 style record string that github.com/miekg/dns will try to parse
+	// Raw is an RFC 1035 style record string that github.com/miekg/dns will try to parse
 	// +optional
 	Raw string `json:"raw,omitempty"`
 }
 
 // DNSRecordStatus defines the observed state of DNSRecord
 type DNSRecordStatus struct {
-	Record string `json:"record,omitempty"`
-	Active *bool  `json:"active,omitempty"`
+	Record   string `json:"record,omitempty"`
+	Active   *bool  `json:"active,omitempty"`
+	Provider string `json:"provider,omitempty"`
+	ID       string `json:"id,omitempty"`
 }
 
 // +kubebuilder:object:root=true

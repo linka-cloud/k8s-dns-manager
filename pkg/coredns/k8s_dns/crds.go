@@ -100,7 +100,16 @@ func (p *CRDS) ServeDNS(ctx context.Context, w dns.ResponseWriter, r *dns.Msg) (
 	case file.ServerFailure:
 		return dns.RcodeServerFailure, nil
 	}
-	w.WriteMsg(m)
+
+	// Figure out the max response size
+	if _, tcp := w.RemoteAddr().(*net.TCPAddr); !tcp {
+		m.Truncate(dns.MinMsgSize)
+	}
+
+	if err := w.WriteMsg(m); err != nil {
+		logrus.Errorf("Failed to write response: %v", err)
+		return dns.RcodeServerFailure, nil
+	}
 	return dns.RcodeSuccess, nil
 }
 

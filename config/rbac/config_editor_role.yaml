@@ -1,21 +1,13 @@
----
+# permissions for end users to edit configs.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
-  creationTimestamp: null
-  name: manager-role
+  name: config-editor-role
 rules:
-- apiGroups:
-  - ""
-  resources:
-  - events
-  verbs:
-  - create
-  - patch
 - apiGroups:
   - dns.linka.cloud
   resources:
-  - dnsrecord
+  - configs
   verbs:
   - create
   - delete
@@ -27,8 +19,6 @@ rules:
 - apiGroups:
   - dns.linka.cloud
   resources:
-  - dnsrecord/status
+  - configs/status
   verbs:
   - get
-  - patch
-  - update

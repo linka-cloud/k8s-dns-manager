@@ -22,3 +22,8 @@ bin
 *.swp
 *.swo
 *~
+
+/config/samples/_*.yaml
+/scratchs
+.env
+/upgrade

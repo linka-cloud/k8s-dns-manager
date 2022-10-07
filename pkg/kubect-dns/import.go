@@ -65,7 +65,6 @@ var (
 
 func init() {
 	RootCmd.AddCommand(ImportCmd)
-	configFlags.AddFlags(ImportCmd.Flags())
 }
 
 func parse(file string) (*v1alpha1.DNSRecordList, error) {

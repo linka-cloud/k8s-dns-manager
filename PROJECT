@@ -6,4 +6,4 @@ resources:
 - group: dns
   kind: DNSRecord
   version: v1alpha1
-version: "3-alpha"
+version: "3"

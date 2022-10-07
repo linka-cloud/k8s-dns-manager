@@ -49,5 +49,4 @@ var (
 
 func init() {
 	RootCmd.AddCommand(ActivateCmd)
-	configFlags.AddFlags(ActivateCmd.Flags())
 }

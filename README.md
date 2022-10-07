@@ -31,6 +31,9 @@ spec:
     target: mail.example.org
 ```
 
+### Raw DNS Records
+
+**Only supported by the CoreDNS plugin**
 For everything else the `raw` field allows to create any kind of record, including the supported ones.
 Raw records are parsed using [miekg/dns](https://godoc.org/github.com/miekg/dns).
 
@@ -45,7 +48,7 @@ spec:
   raw: 'example.org ns ns0.dns.example.org'
 ```
 
-## Installing
+## Installation
 
 The operator can be run with or without defaulting and validation webhook:
 
@@ -60,6 +63,10 @@ The operator can be run with or without defaulting and validation webhook:
     kubectl apply -f ./deploy/with-webhook/k8s-dns.yaml
     ```
 
+### Providers
+
+#### CoreDNS
+
 *Note*:
 In order to be available from outside the cluster, a LoadBalancer service is deployed with the operator.
 The LoadBalancer external IP must be given to the operator by updating the deployment 
@@ -67,6 +74,10 @@ and setting the operator's `--external-address` flag.
 
 Finally, change the nameservers in the DNS registrar console, so they point to the operator's 
 coredns server.
+
+#### Cloudflare
+
+
 
 ## Operator
 

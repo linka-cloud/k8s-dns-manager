@@ -22,6 +22,16 @@ func TestConfig(t *testing.T) {
 		},
 		{
 			config: Config{
+				ExternalAddress: "10.0.1.0",
+			},
+			want: `
+.:53 {
+	k8s_dns 10.0.1.0
+}
+`,
+		},
+		{
+			config: Config{
 				Forward: []string{"8.8.8.8", "8.8.4.4"},
 				Metrics: true,
 			},

@@ -1,20 +1,12 @@
-
 ---
-apiVersion: apiextensions.k8s.io/v1beta1
+apiVersion: apiextensions.k8s.io/v1
 kind: CustomResourceDefinition
 metadata:
   annotations:
-    controller-gen.kubebuilder.io/version: v0.2.5
+    controller-gen.kubebuilder.io/version: v0.9.2
   creationTimestamp: null
   name: dnsrecord.dns.linka.cloud
 spec:
-  additionalPrinterColumns:
-  - JSONPath: .status.active
-    name: Active
-    type: boolean
-  - JSONPath: .status.record
-    name: Record
-    type: string
   group: dns.linka.cloud
   names:
     kind: DNSRecord
@@ -26,133 +18,137 @@ spec:
     - dns
     singular: dnsrecord
   scope: Namespaced
-  subresources:
-    status: {}
-  validation:
-    openAPIV3Schema:
-      description: DNSRecord is the Schema for the dnsrecord API
-      properties:
-        apiVersion:
-          description: 'APIVersion defines the versioned schema of this representation
-            of an object. Servers should convert recognized schemas to the latest
-            internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
-          type: string
-        kind:
-          description: 'Kind is a string value representing the REST resource this
-            object represents. Servers may infer this from the endpoint the client
-            submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
-          type: string
-        metadata:
-          type: object
-        spec:
-          description: DNSRecordSpec defines the desired state of DNSRecord
-          properties:
-            a:
-              properties:
-                class:
-                  type: integer
-                name:
-                  type: string
-                target:
-                  description: 'TODO(adphi): support service, e.g. default/kubernetes'
-                  type: string
-                ttl:
-                  format: int32
-                  type: integer
-              required:
-              - name
-              type: object
-            active:
-              type: boolean
-            cname:
-              properties:
-                class:
-                  type: integer
-                name:
-                  type: string
-                target:
-                  type: string
-                ttl:
-                  format: int32
-                  type: integer
-              required:
-              - name
-              - target
-              type: object
-            mx:
-              properties:
-                class:
-                  type: integer
-                name:
-                  type: string
-                preference:
-                  type: integer
-                target:
-                  type: string
-                ttl:
-                  format: int32
-                  type: integer
-              required:
-              - name
-              type: object
-            raw:
-              description: Raw is a  RFC 1035 style record string that github.com/miekg/dns
-                will try to parse
-              type: string
-            srv:
-              properties:
-                class:
-                  type: integer
-                name:
-                  type: string
-                port:
-                  type: integer
-                priority:
-                  type: integer
-                target:
-                  type: string
-                ttl:
-                  format: int32
-                  type: integer
-                weight:
-                  type: integer
-              required:
-              - name
-              type: object
-            txt:
-              properties:
-                class:
-                  type: integer
-                name:
-                  type: string
-                targets:
-                  items:
-                    type: string
-                  type: array
-                ttl:
-                  format: int32
-                  type: integer
-              required:
-              - name
-              type: object
-          type: object
-        status:
-          description: DNSRecordStatus defines the observed state of DNSRecord
-          properties:
-            active:
-              type: boolean
-            record:
-              type: string
-          type: object
-      type: object
-  version: v1alpha1
   versions:
-  - name: v1alpha1
+  - additionalPrinterColumns:
+    - jsonPath: .status.active
+      name: Active
+      type: boolean
+    - jsonPath: .status.record
+      name: Record
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: DNSRecord is the Schema for the dnsrecord API
+        properties:
+          apiVersion:
+            description: 'APIVersion defines the versioned schema of this representation
+              of an object. Servers should convert recognized schemas to the latest
+              internal value, and may reject unrecognized values. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources'
+            type: string
+          kind:
+            description: 'Kind is a string value representing the REST resource this
+              object represents. Servers may infer this from the endpoint the client
+              submits requests to. Cannot be updated. In CamelCase. More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds'
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: DNSRecordSpec defines the desired state of DNSRecord
+            properties:
+              a:
+                properties:
+                  class:
+                    type: integer
+                  name:
+                    type: string
+                  target:
+                    description: 'TODO(adphi): support service, e.g. default/kubernetes'
+                    type: string
+                  ttl:
+                    format: int32
+                    type: integer
+                required:
+                - name
+                type: object
+              active:
+                type: boolean
+              cname:
+                properties:
+                  class:
+                    type: integer
+                  name:
+                    type: string
+                  target:
+                    type: string
+                  ttl:
+                    format: int32
+                    type: integer
+                required:
+                - name
+                - target
+                type: object
+              mx:
+                properties:
+                  class:
+                    type: integer
+                  name:
+                    type: string
+                  preference:
+                    type: integer
+                  target:
+                    type: string
+                  ttl:
+                    format: int32
+                    type: integer
+                required:
+                - name
+                type: object
+              raw:
+                description: Raw is an RFC 1035 style record string that github.com/miekg/dns
+                  will try to parse
+                type: string
+              srv:
+                properties:
+                  class:
+                    type: integer
+                  name:
+                    type: string
+                  port:
+                    type: integer
+                  priority:
+                    type: integer
+                  target:
+                    type: string
+                  ttl:
+                    format: int32
+                    type: integer
+                  weight:
+                    type: integer
+                required:
+                - name
+                type: object
+              txt:
+                properties:
+                  class:
+                    type: integer
+                  name:
+                    type: string
+                  targets:
+                    items:
+                      type: string
+                    type: array
+                  ttl:
+                    format: int32
+                    type: integer
+                required:
+                - name
+                type: object
+            type: object
+          status:
+            description: DNSRecordStatus defines the observed state of DNSRecord
+            properties:
+              active:
+                type: boolean
+              id:
+                type: string
+              provider:
+                type: string
+              record:
+                type: string
+            type: object
+        type: object
     served: true
     storage: true
-status:
-  acceptedNames:
-    kind: ""
-    plural: ""
-  conditions: []
-  storedVersions: []
+    subresources:
+      status: {}

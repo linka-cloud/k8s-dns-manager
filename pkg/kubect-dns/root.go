@@ -58,4 +58,5 @@ func init() {
 	_ = v1alpha1.AddToScheme(scheme.Scheme)
 	flags := pflag.NewFlagSet("kubectl-dns", pflag.ExitOnError)
 	pflag.CommandLine = flags
+	configFlags.AddFlags(flags)
 }

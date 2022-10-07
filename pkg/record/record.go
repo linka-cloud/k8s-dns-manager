@@ -188,3 +188,24 @@ func ToRR(r v1alpha1.DNSRecord) (dns.RR, error) {
 		return rr, nil
 	}
 }
+
+func Name(r *v1alpha1.DNSRecord) string {
+	switch {
+	case r.Spec.A != nil:
+		return r.Spec.A.Name
+	case r.Spec.TXT != nil:
+		return r.Spec.TXT.Name
+	case r.Spec.SRV != nil:
+		return r.Spec.SRV.Name
+	case r.Spec.MX != nil:
+		return r.Spec.MX.Name
+	case r.Spec.CNAME != nil:
+		return r.Spec.CNAME.Name
+	default:
+		rr, err := dns.NewRR(r.Spec.Raw)
+		if err != nil {
+			return ""
+		}
+		return rr.Header().Name
+	}
+}

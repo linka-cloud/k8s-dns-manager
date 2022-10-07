@@ -43,13 +43,12 @@ func (r *DNSRecord) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
-// +kubebuilder:webhook:path=/mutate-dns-linka-cloud-v1alpha1-dnsrecord,mutating=true,failurePolicy=fail,groups=dns.linka.cloud,resources=dnsrecord,verbs=create;update,versions=v1alpha1,name=mdnsrecord.kb.io
+// +kubebuilder:webhook:path=/mutate-dns-linka-cloud-v1alpha1-dnsrecord,mutating=true,failurePolicy=fail,groups=dns.linka.cloud,resources=dnsrecord,verbs=create;update,versions=v1alpha1,name=mdnsrecord.kb.io,admissionReviewVersions=v1,sideEffects=None
 
 var _ webhook.Defaulter = &DNSRecord{}
 
 // Default implements webhook.Defaulter so a webhook will be registered for the type
 func (in *DNSRecord) Default() {
-	dnsrecordlog.Info("default", "name", in.Name)
 	if in.Spec.Active == nil {
 		in.Spec.Active = ptr.Bool(true)
 	}
@@ -99,7 +98,7 @@ func (in *DNSRecord) Default() {
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-// +kubebuilder:webhook:verbs=create;update,path=/validate-dns-linka-cloud-v1alpha1-dnsrecord,mutating=false,failurePolicy=fail,groups=dns.linka.cloud,resources=dnsrecord,versions=v1alpha1,name=vdnsrecord.kb.io
+// +kubebuilder:webhook:verbs=create;update,path=/validate-dns-linka-cloud-v1alpha1-dnsrecord,mutating=false,failurePolicy=fail,groups=dns.linka.cloud,resources=dnsrecord,versions=v1alpha1,name=vdnsrecord.kb.io,admissionReviewVersions=v1,sideEffects=None
 
 var _ webhook.Validator = &DNSRecord{}
 
@@ -148,7 +147,7 @@ func (r *DNSRecord) validate() error {
 	return apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: r.Kind}, r.Name, errs)
 }
 
-func (r ARecord) validate() (errs field.ErrorList) {
+func (r *ARecord) validate() (errs field.ErrorList) {
 	if !strings.HasSuffix(r.Name, ".") {
 		errs = append(errs, field.Invalid(field.NewPath("spec").Child("a").Child("name"), r.Name, "name must be an absolute dns name (should ends with a dot)"))
 	}
@@ -158,16 +157,19 @@ func (r ARecord) validate() (errs field.ErrorList) {
 	}
 	return
 }
-func (r CNAMERecord) validate() (errs field.ErrorList) {
+func (r *CNAMERecord) validate() (errs field.ErrorList) {
 	if !strings.HasSuffix(r.Name, ".") {
 		errs = append(errs, field.Invalid(field.NewPath("spec").Child("cname").Child("name"), r.Name, "name must be an absolute dns name (should ends with a dot)"))
 	}
 	if r.Target == "" {
 		errs = append(errs, field.Invalid(field.NewPath("spec").Child("cname").Child("target"), r.Target, "SRV record: target is required"))
 	}
+	if !strings.HasSuffix(r.Target, ".") {
+		errs = append(errs, field.Invalid(field.NewPath("spec").Child("cname").Child("target"), r.Target, "target must be an absolute dns name (should ends with a dot)"))
+	}
 	return
 }
-func (r TXTRecord) validate() (errs field.ErrorList) {
+func (r *TXTRecord) validate() (errs field.ErrorList) {
 	if !strings.HasSuffix(r.Name, ".") {
 		errs = append(errs, field.Invalid(field.NewPath("spec").Child("txt").Child("name"), r.Name, "name must be an absolute dns name (should ends with a dot)"))
 	}
@@ -176,21 +178,27 @@ func (r TXTRecord) validate() (errs field.ErrorList) {
 	}
 	return
 }
-func (r SRVRecord) validate() (errs field.ErrorList) {
+func (r *SRVRecord) validate() (errs field.ErrorList) {
 	if !strings.HasSuffix(r.Name, ".") {
 		errs = append(errs, field.Invalid(field.NewPath("spec").Child("srv").Child("name"), r.Name, "must be an absolute dns name (should ends with a dot)"))
 	}
 	if r.Target == "" {
 		errs = append(errs, field.Invalid(field.NewPath("spec").Child("srv").Child("target"), r.Target, "SRV record: target is required"))
 	}
+	if !strings.HasSuffix(r.Target, ".") {
+		errs = append(errs, field.Invalid(field.NewPath("spec").Child("srv").Child("target"), r.Target, "must be an absolute dns name (should ends with a dot)"))
+	}
 	return
 }
-func (r MXRecord) validate() (errs field.ErrorList) {
+func (r *MXRecord) validate() (errs field.ErrorList) {
 	if !strings.HasSuffix(r.Name, ".") {
 		errs = append(errs, field.Invalid(field.NewPath("spec").Child("mx").Child("name"), r.Name, "must be an absolute dns name (should ends with a dot)"))
 	}
 	if r.Target == "" {
-		errs = append(errs, field.Invalid(field.NewPath("spec").Child("cname").Child("target"), r.Target, "MX Record: target cannot be empty"))
+		errs = append(errs, field.Invalid(field.NewPath("spec").Child("mx").Child("target"), r.Target, "MX Record: target cannot be empty"))
+	}
+	if !strings.HasSuffix(r.Target, ".") {
+		errs = append(errs, field.Invalid(field.NewPath("spec").Child("mx").Child("target"), r.Target, "must be an absolute dns name (should ends with a dot)"))
 	}
 	return
 }

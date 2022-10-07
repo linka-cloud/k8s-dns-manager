@@ -80,5 +80,4 @@ func get(name string) (*v1alpha1.DNSRecord, error) {
 
 func init() {
 	RootCmd.AddCommand(DeactivateCmd)
-	configFlags.AddFlags(DeactivateCmd.Flags())
 }
