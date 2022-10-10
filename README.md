@@ -8,7 +8,10 @@ We do not support backward-compatibility for the alpha releases.
 ## Overview
 
 The DNS Operator allows managing DNS record directly from within a Kubernetes cluster by defining a new resource: DNSRecord.
-This resource is then used the CoreDNS k8s_dns plugin to serve the records stored inside Kubernetes.
+
+When using an external provider, the DNS Operator will create a DNS record in the provider based on the resource definition.
+
+When using the CoreDNS provider, the DNS Operator will configure CoreDNS to serve the DNS record.
 
 The supported records types are:
 - A
@@ -28,7 +31,7 @@ spec:
   mx:
     name: example.org.
     preference: 10
-    target: mail.example.org
+    target: mail.example.org.
 ```
 
 ### Raw DNS Records
@@ -48,20 +51,35 @@ spec:
   raw: 'example.org ns ns0.dns.example.org'
 ```
 
+## Requirements
+
+### Domain Name
+
+Obviously, you need a domain name to use this operator.
+
+If you don't want to buy one, you can use a free domain name from [Freenom](https://www.freenom.com/en/index.html?lang=en).
+
+If using the CoreDNS provider, you will also need to configure your domain name to use the CoreDNS server as a nameserver.
+
+
+### Cert-Manager
+
+Cert Manager is required in order to generate the TLS certificates used by the DNS Operator Validation Webhook.
+
+It can be installed using the [official documentation](https://cert-manager.io/docs/installation/kubernetes/).
+
+```bash
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.9.1/cert-manager.yaml
+```
+
+
 ## Installation
 
-The operator can be run with or without defaulting and validation webhook:
+### CRDs, RBAC and Webhook
 
-- **Without webhook**:
-
-    ```bash
-    kubectl apply -f ./deploy/default/k8s-dns.yaml
-    ```
-
-- **With webhook** (requires Cert-Manager to be installed in the cluster):
-    ```bash
-    kubectl apply -f ./deploy/with-webhook/k8s-dns.yaml
-    ```
+```bash
+kubectl apply -f ./deploy/common.yaml
+```
 
 ### Providers
 
@@ -72,20 +90,72 @@ In order to be available from outside the cluster, a LoadBalancer service is dep
 The LoadBalancer external IP must be given to the operator by updating the deployment 
 and setting the operator's `--external-address` flag.
 
-Finally, change the nameservers in the DNS registrar console, so they point to the operator's 
+Finally, change the nameservers in your DNS registrar console, so they point to the operator's 
 coredns server.
+
+```bash
+kubectl apply -f ./deploy/coredns.yaml
+```
 
 #### Cloudflare
 
+Required environment variables:
 
+- `CLOUDFLARE_TOKEN`: Cloudflare API token
+
+```bash
+export CLOUDFLARE_TOKEN=...
+cat deploy/cloudflare.yaml | envsubst | kubectl apply -f -
+```
+
+#### Hetzner
+
+Required environment variables:
+
+- `HETZNER_TOKEN`: Hetzner DNS API token
+
+```bash
+export HETZNER_TOKEN=...
+cat deploy/hetzner.yaml | envsubst | kubectl apply -f -
+```
+
+#### OVH
+
+Required environment variables:
+
+- `OVH_APPLICATION_KEY`: OVH Application Key
+- `OVH_APPLICATION_SECRET`: OVH Application Secret
+- `OVH_CONSUMER_KEY`: OVH Consumer Key
+- `OVH_ENDPOINT`: OVH API endpoint
+
+```bash
+export OVH_APPLICATION_KEY=...
+export OVH_APPLICATION_SECRET=...
+export OVH_CONSUMER_KEY=...
+export OVH_ENDPOINT=...
+cat deploy/ovh.yaml | envsubst | kubectl apply -f -
+```
+
+#### Scaleway
+
+Required environment variables:
+- `SCALEWAY_SECRET_KEY`: Scaleway Secret Key
+- `SCALEWAY_ORGANIZATION_ID`: Scaleway Organization ID
+
+```bash
+export SCALEWAY_SECRET_KEY=...
+export SCALEWAY_ORGANIZATION_ID=...
+cat deploy/scaleway.yaml | envsubst | kubectl apply -f -
+```
 
 ## Operator
 
-The operator only ensure (for now) the dns records' validity and state (active / inactive).
-It also runs the CoreDNS server, but it should be soon moved out and deployed by the operator.
+The operator ensure the dns records' validity and state (active / inactive).
+When using the **coredns** provider, it may also run the CoreDNS server, but it should be soon moved out and deployed by the operator.
+When using the other providers, the operator creates and updates the records using the DNS provider's API.
 
 By default, the manifests include a Kubernetes LoadBalancer Service exposing the in-process CoreDNS server
-`udp` port: 53.
+`udp` and `tcp` ports: 53.
 
 ## k8s_dns CoreDNS Plugin
 The `k8s_dns` plugin serve the `DNSRecord` and ensure that valid dns apex are served if not defined via `DNSRecord`:
@@ -158,7 +228,6 @@ See [cert-manager-webhook-k8s-dns](https://github.com/linka-cloud/cert-manager-w
 
 ## TODOs:
 - [ ] docs
-- [ ] handle namespaces
 - [ ] handle private IP address
 - [ ] out of manager CoreDNS server
 - [ ] CoreDNS server deployed by the manager

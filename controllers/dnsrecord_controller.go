@@ -83,7 +83,6 @@ func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	// TODO(adphi): SOA and NS Records ?
 	rec.Default()
 	rr, err := record.ToRR(rec)
 	if err != nil {
@@ -106,6 +105,7 @@ func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			}
 			return ctrl.Result{}, nil
 		}
+		r.recorder.Event(&rec, "Deleted", fmt.Sprintf("Deleted DNSRecord %s", req.NamespacedName))
 		if ok := removeFinalizer(&rec); !ok {
 			return ctrl.Result{}, nil
 		}

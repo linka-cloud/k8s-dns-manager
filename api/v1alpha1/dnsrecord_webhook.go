@@ -21,6 +21,7 @@ import (
 	"strings"
 
 	"github.com/miekg/dns"
+	"github.com/weppos/publicsuffix-go/publicsuffix"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -60,6 +61,7 @@ func (in *DNSRecord) Default() {
 		if in.Spec.A.Ttl == 0 {
 			in.Spec.A.Ttl = 3600
 		}
+		in.Spec.A.Name = enforceFqdn(in.Spec.A.Name)
 	case in.Spec.CNAME != nil:
 		if in.Spec.CNAME.Class == 0 {
 			in.Spec.CNAME.Class = 1
@@ -67,6 +69,8 @@ func (in *DNSRecord) Default() {
 		if in.Spec.CNAME.Ttl == 0 {
 			in.Spec.CNAME.Ttl = 3600
 		}
+		in.Spec.CNAME.Name = enforceFqdn(in.Spec.CNAME.Name)
+		in.Spec.CNAME.Target = enforceFqdn(in.Spec.CNAME.Name)
 	case in.Spec.TXT != nil:
 		if in.Spec.TXT.Class == 0 {
 			in.Spec.TXT.Class = 1
@@ -74,6 +78,7 @@ func (in *DNSRecord) Default() {
 		if in.Spec.TXT.Ttl == 0 {
 			in.Spec.TXT.Ttl = 3600
 		}
+		in.Spec.TXT.Name = enforceFqdn(in.Spec.TXT.Name)
 	case in.Spec.SRV != nil:
 		if in.Spec.SRV.Class == 0 {
 			in.Spec.SRV.Class = 1
@@ -84,6 +89,8 @@ func (in *DNSRecord) Default() {
 		if in.Spec.SRV.Weight == 0 {
 			in.Spec.SRV.Weight = 1
 		}
+		in.Spec.SRV.Name = enforceFqdn(in.Spec.SRV.Name)
+		in.Spec.SRV.Target = enforceFqdn(in.Spec.SRV.Target)
 	case in.Spec.MX != nil:
 		if in.Spec.MX.Class == 0 {
 			in.Spec.MX.Class = 1
@@ -94,7 +101,21 @@ func (in *DNSRecord) Default() {
 		if in.Spec.MX.Preference == 0 {
 			in.Spec.MX.Preference = 10
 		}
+		in.Spec.MX.Name = enforceFqdn(in.Spec.MX.Name)
+		in.Spec.MX.Target = enforceFqdn(in.Spec.MX.Target)
 	}
+}
+
+func enforceFqdn(v string) string {
+	v = strings.ToLower(v)
+	d, err := publicsuffix.Domain(v)
+	if err != nil {
+		return v
+	}
+	if strings.HasSuffix(v, d) {
+		return v + "."
+	}
+	return v
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.

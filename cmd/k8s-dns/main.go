@@ -17,7 +17,6 @@ limitations under the License.
 package main
 
 import (
-	"fmt"
 	"net"
 	"os"
 
@@ -86,13 +85,12 @@ var (
 				dnsVerificationServer = net.ParseIP("1.1.1.1")
 			}
 
-			if !noDNSServer && dnsProvider != "" && dnsProvider != "coredns" {
-				setupLog.Error(fmt.Errorf("dns provider must be coredns when running in-process dns server"), "invalid dns provider")
-				os.Exit(1)
-			}
-
 			if dnsProvider == "" {
 				dnsProvider = "coredns"
+			}
+
+			if dnsProvider != "coredns" {
+				noDNSServer = true
 			}
 
 			prov, err := provider.New(dnsProvider)

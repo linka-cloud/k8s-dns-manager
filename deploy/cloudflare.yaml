@@ -1,11 +1,11 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: cloudflare-credentials
+  name: dns-provider-credentials
   namespace: dns-system
-type: Opaque
 stringData:
-  CLOUDFLARE_TOKEN: "YOUR_CLOUDFLARE_TOKEN"
+  token: ${CLOUDFLARE_TOKEN}
+type: Opaque
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -28,16 +28,21 @@ spec:
       - args:
         - --enable-leader-election
         - --provider=cloudflare
+        - --enable-webhook
         command:
         - /k8s-dns
-        image: linkacloud/k8s-dns-manager:latest
+        env:
+        - name: CLOUDFLARE_TOKEN
+          valueFrom:
+            secretKeyRef:
+              key: token
+              name: dns-provider-credentials
+        image: linkacloud/k8s-dns-manager:v0.1.0
         name: manager
-        envFrom:
-        - secretRef:
-            name: cloudflare-credentials
         ports:
-        - containerPort: 53
-          protocol: UDP
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
         resources:
           limits:
             cpu: 100m
@@ -45,4 +50,13 @@ spec:
           requests:
             cpu: 100m
             memory: 20Mi
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
       terminationGracePeriodSeconds: 10
+      volumes:
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: webhook-server-cert

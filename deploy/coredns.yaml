@@ -1,3 +1,19 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: dns-server
+  namespace: dns-system
+spec:
+  externalTrafficPolicy: Local
+  ports:
+  - port: 53
+    protocol: UDP
+  - port: 53
+    protocol: TCP
+  selector:
+    control-plane: dns-controller
+  type: LoadBalancer
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -18,16 +34,23 @@ spec:
       containers:
       - args:
         - --enable-leader-election
+        - --provider=coredns
         - --dns-log
         - --dns-forward=8.8.8.8
         - --dns-any
+        - --enable-webhook
         command:
         - /k8s-dns
-        image: linkacloud/k8s-dns-manager:latest
+        image: linkacloud/k8s-dns-manager:v0.1.0
         name: manager
         ports:
         - containerPort: 53
           protocol: UDP
+        - containerPort: 53
+          protocol: TCP
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
         resources:
           limits:
             cpu: 100m
@@ -35,4 +58,13 @@ spec:
           requests:
             cpu: 100m
             memory: 20Mi
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
       terminationGracePeriodSeconds: 10
+      volumes:
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: webhook-server-cert

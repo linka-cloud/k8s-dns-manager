@@ -26,4 +26,5 @@ bin
 /config/samples/_*.yaml
 /scratchs
 .env
+.env-exports
 /upgrade

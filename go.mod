@@ -10,7 +10,7 @@ require (
 	github.com/libdns/hetzner v0.0.1
 	github.com/libdns/libdns v0.2.2-0.20221006221142-3ef90aee33fd
 	github.com/libdns/ovh v0.0.1
-	github.com/libdns/scaleway v0.1.1
+	github.com/libdns/scaleway v0.1.0
 	github.com/miekg/dns v1.1.50
 	github.com/onsi/ginkgo v1.16.5
 	github.com/onsi/gomega v1.19.0
@@ -32,3 +32,5 @@ require (
 )
 
 replace github.com/libdns/cloudflare => github.com/linka-cloud/cloudflare v0.0.0-20221007092341-f65599da475a
+
+replace github.com/libdns/hetzner => github.com/linka-cloud/hetzner v0.0.2-0.20221007151052-8f56df8a2bdf

@@ -1,0 +1,10 @@
+namespace: dns-system
+
+namePrefix: dns-
+
+resources:
+- ../../manager
+- credentials_secret.yaml
+
+patchesStrategicMerge:
+- manager_provider_patch.yaml

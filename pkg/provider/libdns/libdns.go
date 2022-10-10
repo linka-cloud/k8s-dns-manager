@@ -53,9 +53,10 @@ func NewSync(name string, c Client) provider.Provider {
 
 func (p prov) Reconcile(ctx context.Context, rec *v1alpha1.DNSRecord) (ctrl.Result, bool, error) {
 	log := ctrl.LoggerFrom(ctx).WithValues("provider", p.name)
+	// we don't own this record, so we should not reconcile it
 	if rec.Status.Provider != "" && rec.Status.Provider != p.name {
-		log.Info("skipping record, not for this provider", "provider", rec.Status.Provider)
-		return ctrl.Result{}, true, nil
+		log.Info("skipping record, not for this provider", "recordProvider", rec.Status.Provider)
+		return ctrl.Result{}, false, nil
 	}
 	rr, err := record.ToRR(*rec)
 	if err != nil {
@@ -86,7 +87,7 @@ func (p prov) Reconcile(ctx context.Context, rec *v1alpha1.DNSRecord) (ctrl.Resu
 		}
 	}
 
-	if !rec.DeletionTimestamp.IsZero() {
+	if !rec.DeletionTimestamp.IsZero() || (rec.Spec.Active != nil && !*rec.Spec.Active) {
 		if r == nil {
 			rec.Status.ID = ""
 			rec.Status.Provider = ""

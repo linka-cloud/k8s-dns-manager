@@ -1,0 +1,10 @@
+namespace: dns-system
+
+namePrefix: dns-
+
+resources:
+- ../../manager
+- dns_service.yaml
+
+patchesStrategicMerge:
+- coredns_manager_patch.yaml

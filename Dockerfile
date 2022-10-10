@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM golang:1.13 as builder
+FROM golang:1.19 as builder
 
 WORKDIR /workspace
 # Copy the Go Modules manifests
@@ -11,18 +11,18 @@ RUN go mod download
 RUN mkdir -p cmd/k8s-dns/
 
 # Copy the go source
-COPY cmd/k8s-dns/main.go cmd/k8s-dns/main.go
+COPY cmd/k8s-dns cmd/k8s-dns
 COPY api/ api/
 COPY controllers/ controllers/
 COPY pkg/ pkg/
 
 # Build
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o k8s-dns cmd/k8s-dns/main.go
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 GO111MODULE=on go build -a -o k8s-dns -ldflags="-s -w" ./cmd/k8s-dns/
 
-# Use distroless as minimal base image to package the manager binary
-# Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM alpine
 WORKDIR /
 COPY --from=builder /workspace/k8s-dns .
+
+RUN apk add --no-cache ca-certificates
 
 ENTRYPOINT ["/k8s-dns"]

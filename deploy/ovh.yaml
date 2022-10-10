@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dns-provider-credentials
+  namespace: dns-system
+stringData:
+  application-key: ${OVH_APPLICATION_KEY}
+  application-secret: ${OVH_APPLICATION_SECRET}
+  consumer-key: ${OVH_CONSUMER_KEY}
+  endpoint: ${OVH_ENDPOINT}
+type: Opaque
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    control-plane: dns-controller
+  name: dns-controller-manager
+  namespace: dns-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      control-plane: dns-controller
+  template:
+    metadata:
+      labels:
+        control-plane: dns-controller
+    spec:
+      containers:
+      - args:
+        - --enable-leader-election
+        - --provider=ovh
+        - --enable-webhook
+        command:
+        - /k8s-dns
+        env:
+        - name: OVH_ENDPOINT
+          valueFrom:
+            secretKeyRef:
+              key: endpoint
+              name: dns-provider-credentials
+        - name: OVH_APPLICATION_KEY
+          valueFrom:
+            secretKeyRef:
+              key: application-key
+              name: dns-provider-credentials
+        - name: OVH_APPLICATION_SECRET
+          valueFrom:
+            secretKeyRef:
+              key: application-secret
+              name: dns-provider-credentials
+        - name: OVH_CONSUMER_KEY
+          valueFrom:
+            secretKeyRef:
+              key: consumer-key
+              name: dns-provider-credentials
+        image: linkacloud/k8s-dns-manager:v0.1.0
+        name: manager
+        ports:
+        - containerPort: 9443
+          name: webhook-server
+          protocol: TCP
+        resources:
+          limits:
+            cpu: 100m
+            memory: 30Mi
+          requests:
+            cpu: 100m
+            memory: 20Mi
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: cert
+          readOnly: true
+      terminationGracePeriodSeconds: 10
+      volumes:
+      - name: cert
+        secret:
+          defaultMode: 420
+          secretName: webhook-server-cert
