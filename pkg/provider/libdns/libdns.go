@@ -74,7 +74,7 @@ func (p prov) Reconcile(ctx context.Context, rec *v1alpha1.DNSRecord) (ctrl.Resu
 	}
 	zone := dns.Fqdn(d)
 	recs, err := p.c.GetRecords(ctx, zone)
-	if err != nil {
+	if err != nil && !strings.Contains(strings.ToLower(err.Error()), "not found") {
 		log.Error(err, "get records", "zone", zone)
 		return ctrl.Result{}, false, err
 	}
