@@ -98,15 +98,26 @@ var (
 				setupLog.Error(err, "unable to create provider")
 				os.Exit(1)
 			}
-			c := &controllers.DNSRecordReconciler{
+			dnsReconciler := &controllers.DNSRecordReconciler{
 				Client:                mgr.GetClient(),
 				Log:                   ctrl.Log.WithName("controllers").WithName("DNSRecord"),
 				Scheme:                mgr.GetScheme(),
 				Provider:              prov,
 				DNSVerificationServer: dnsVerificationServer.String() + ":53",
 			}
-			if err = c.SetupWithManager(mgr); err != nil {
+			if err = dnsReconciler.SetupWithManager(mgr); err != nil {
 				setupLog.Error(err, "unable to create controller", "controller", "DNSRecord")
+				os.Exit(1)
+			}
+
+			ingReconciler := &controllers.IngressReconciler{
+				Client: mgr.GetClient(),
+				Log:    ctrl.Log.WithName("controllers").WithName("Ingress"),
+				Scheme: mgr.GetScheme(),
+			}
+
+			if err := ingReconciler.SetupWithManager(mgr); err != nil {
+				setupLog.Error(err, "unable to create controller", "controller", "Ingress")
 				os.Exit(1)
 			}
 
@@ -119,7 +130,7 @@ var (
 			}
 
 			if !noDNSServer {
-				c.DNSVerificationServer = "127.0.0.1:53"
+				dnsReconciler.DNSVerificationServer = "127.0.0.1:53"
 				conf, err := config.Config{
 					Forward:         dnsForward,
 					Log:             dnsLog,

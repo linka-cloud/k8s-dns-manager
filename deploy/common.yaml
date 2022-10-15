@@ -231,6 +231,20 @@ rules:
   - get
   - patch
   - update
+- apiGroups:
+  - networking.k8s.io.linka.cloud
+  resources:
+  - ingresses
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - networking.k8s.io.linka.cloud
+  resources:
+  - ingresses/status
+  verbs:
+  - get
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
