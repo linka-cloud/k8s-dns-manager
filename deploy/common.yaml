@@ -216,7 +216,6 @@ rules:
   resources:
   - services
   verbs:
-  - create
   - get
   - list
   - watch
@@ -247,7 +246,7 @@ rules:
   - patch
   - update
 - apiGroups:
-  - networking.k8s.io.linka.cloud
+  - networking.k8s.io
   resources:
   - ingresses
   verbs:
@@ -255,7 +254,7 @@ rules:
   - list
   - watch
 - apiGroups:
-  - networking.k8s.io.linka.cloud
+  - networking.k8s.io
   resources:
   - ingresses/status
   verbs:
