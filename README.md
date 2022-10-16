@@ -232,16 +232,20 @@ Usage:
   k8s-dns [flags]
 
 Flags:
-      --dns-cache int             Enable coredns cache with ttl (in seconds)
-      --dns-forward strings       Dns forward servers
-      --dns-log                   Enable coredns query logs
-      --dns-metrics               Enable coredns metrics
-      --enable-leader-election    Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.
-      --enable-webhook            Enable the validation webhook
-  -a, --external-address string   The external dns server address, e.g the loadbalancer service IP (default "127.0.0.1")
-  -h, --help                      help for k8s-dns
-      --metrics-addr string       The address the metric endpoint binds to. (default ":8080")
-      --no-dns                    Do not run in process coredns server
+      --dns-any                      Enable coredns 'any' plugin
+      --dns-cache int                Enable coredns cache with ttl (in seconds)
+      --dns-forward strings          Dns forward servers
+      --dns-log                      Enable coredns query logs
+      --dns-metrics                  Enable coredns metrics on 0.0.0.0:9153
+      --dns-verification-server ip   DNS server to use for verification (default 1.1.1.1)
+      --enable-leader-election       Enable leader election for controller manager. Enabling this will ensure there is only one active controller manager.
+      --enable-webhook               Enable the validation webhook
+  -a, --external-address ip          The external dns server address, e.g the loadbalancer service IP (default 127.0.0.1)
+  -h, --help                         help for k8s-dns
+      --metrics-addr string          The address the metric endpoint binds to. (default ":4299")
+      --no-dns                       Do not run in process coredns server
+  -p, --provider string              DNS provider to use (default "coredns")
+
 ```
 
 ## kubectl-dns
