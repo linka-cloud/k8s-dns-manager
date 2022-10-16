@@ -26,7 +26,7 @@ Example MX Record:
 apiVersion: dns.linka.cloud/v1alpha1
 kind: DNSRecord
 metadata:
-  name: ns-example-org
+  name: mx-example-org
   namespace: default
 spec:
   mx:
