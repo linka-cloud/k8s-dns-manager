@@ -6,9 +6,11 @@ metadata:
 spec:
   externalTrafficPolicy: Local
   ports:
-  - port: 53
+  - name: dns-udp
+    port: 53
     protocol: UDP
-  - port: 53
+  - name: dns-tcp
+    port: 53
     protocol: TCP
   selector:
     control-plane: dns-controller
@@ -41,12 +43,14 @@ spec:
         - --enable-webhook
         command:
         - /k8s-dns
-        image: linkacloud/k8s-dns-manager:v0.1.0
+        image: linkacloud/k8s-dns-manager:v0.1.1
         name: manager
         ports:
         - containerPort: 53
+          name: dns-udp
           protocol: UDP
         - containerPort: 53
+          name: dns-tcp
           protocol: TCP
         - containerPort: 9443
           name: webhook-server

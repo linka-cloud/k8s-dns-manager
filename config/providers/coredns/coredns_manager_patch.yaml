@@ -18,8 +18,10 @@ spec:
         ports:
         - containerPort: 53
           protocol: UDP
+          name: dns-udp
         - containerPort: 53
           protocol: TCP
+          name: dns-tcp
         - containerPort: 9443
           name: webhook-server
           protocol: TCP

@@ -3,4 +3,4 @@ resources:
 
 images:
 - name: linkacloud/k8s-dns-manager
-  newTag: v0.1.0
+  newTag: v0.1.1

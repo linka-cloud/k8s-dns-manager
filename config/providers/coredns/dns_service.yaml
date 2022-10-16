@@ -10,6 +10,8 @@ spec:
   ports:
   - port: 53
     protocol: UDP
+    name: dns-udp
   - port: 53
     protocol: TCP
+    name: dns-tcp
   type: LoadBalancer
