@@ -70,7 +70,7 @@ func (in *DNSRecord) Default() {
 			in.Spec.CNAME.Ttl = 3600
 		}
 		in.Spec.CNAME.Name = enforceFqdn(in.Spec.CNAME.Name)
-		in.Spec.CNAME.Target = enforceFqdn(in.Spec.CNAME.Name)
+		in.Spec.CNAME.Target = enforceFqdn(in.Spec.CNAME.Target)
 	case in.Spec.TXT != nil:
 		if in.Spec.TXT.Class == 0 {
 			in.Spec.TXT.Class = 1
