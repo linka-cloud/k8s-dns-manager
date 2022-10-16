@@ -212,6 +212,21 @@ rules:
   - create
   - patch
 - apiGroups:
+  - ""
+  resources:
+  - services
+  verbs:
+  - create
+  - get
+  - list
+  - watch
+- apiGroups:
+  - ""
+  resources:
+  - services/status
+  verbs:
+  - get
+- apiGroups:
   - dns.linka.cloud
   resources:
   - dnsrecord
