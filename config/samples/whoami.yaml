@@ -29,39 +29,14 @@ apiVersion: v1
 kind: Service
 metadata:
   name: whoami
+  annotations:
+    dns.linka.cloud/hostname: whoami.linka-cloud.dev
+    dns.linka.cloud/ttl: "60"
 spec:
   selector:
     app: whoami
   ports:
   - port: 80
+    name: http
   type: ClusterIP
----
-apiVersion: networking.k8s.io/v1
-kind: Ingress
-metadata:
-  name: whoami
-  annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: websecure
-    dns.linka.cloud/ttl: "60"
-spec:
-  rules:
-  - host: whoami.linka-cloud.dev
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: whoami
-            port:
-              number: 80
-  - host: whoami2.linka-cloud.dev
-    http:
-      paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: whoami
-            port:
-              number: 80
+  #type: LoadBalancer

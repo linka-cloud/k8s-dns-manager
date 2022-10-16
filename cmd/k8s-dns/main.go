@@ -121,6 +121,17 @@ var (
 				os.Exit(1)
 			}
 
+			svcReconciler := &controllers.ServiceReconciler{
+				Client: mgr.GetClient(),
+				Log:    ctrl.Log.WithName("controllers").WithName("Service"),
+				Scheme: mgr.GetScheme(),
+			}
+
+			if err := svcReconciler.SetupWithManager(mgr); err != nil {
+				setupLog.Error(err, "unable to create controller", "controller", "Service")
+				os.Exit(1)
+			}
+
 			if enableWebhook {
 				setupLog.Info("registering webhook")
 				if err = (&dnsv1alpha1.DNSRecord{}).SetupWebhookWithManager(mgr); err != nil {
