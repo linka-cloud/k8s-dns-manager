@@ -37,6 +37,7 @@ spec:
 ### Raw DNS Records
 
 **Only supported by the CoreDNS plugin**
+
 For everything else the `raw` field allows to create any kind of record, including the supported ones.
 Raw records are parsed using [miekg/dns](https://godoc.org/github.com/miekg/dns).
 
@@ -51,13 +52,66 @@ spec:
   raw: 'example.org ns ns0.dns.example.org'
 ```
 
+### Generate DNS Records from LoadBalancer Services and Ingresses
+
+The DNS Operator support creating automatically DNS records for LoadBalancer Services and Ingresses.
+
+This behavior can be disabled by setting the `dns.linka.cloud/disabled` annotation on the Ingress or the Service.
+
+The TTL can be set using the `dns.linka.cloud/ttl` annotation on the Ingress or the Service.
+
+For Services, the DNS Operator will create an A record if the Service has the `dns.linka.cloud/hostname` annotation set 
+to a valid dns hostname and the Service has a LoadBalancer IP.
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: whoami
+  annotations:
+    dns.linka.cloud/hostname: whoami.example.org
+    dns.linka.cloud/ttl: "60"
+spec:
+  selector:
+    app: whoami
+  ports:
+  - port: 80
+    name: http
+  type: LoadBalancer
+```
+
+For Ingresses, the DNS Operator will create an A record per host with the status loadbalancer IP.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: whoami
+  annotations:
+    dns.linka.cloud/ttl: "60"
+spec:
+  rules:
+  - host: whoami.example.org
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: whoami
+            port:
+              number: 80
+```
+
+
 ## Requirements
 
 ### Domain Name
 
 Obviously, you need a domain name to use this operator.
 
-If you don't want to buy one, you can use a free domain name from [Freenom](https://www.freenom.com/en/index.html?lang=en).
+If you don't want to buy one, you can use a free domain name from [Freenom](https://www.freenom.com/en/index.html?lang=en)
+and use it with [Cloudflare](https://www.cloudflare.com/) or the CoreDNS provider.
 
 If using the CoreDNS provider, you will also need to configure your domain name to use the CoreDNS server as a nameserver.
 
