@@ -53,7 +53,7 @@ spec:
   raw: 'example.org ns ns0.dns.example.org'
 ```
 
-### Generate DNS Records from LoadBalancer Services and Ingresses
+### Generate A Records from LoadBalancer Services and Ingresses
 
 The DNS Operator support creating automatically DNS records for LoadBalancer Services and Ingresses.
 
