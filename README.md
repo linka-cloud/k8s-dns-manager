@@ -207,6 +207,22 @@ export SCALEWAY_ORGANIZATION_ID=...
 cat deploy/scaleway.yaml | envsubst | kubectl apply -f -
 ```
 
+## Uninstall
+
+You need to delete the crds first, so that the controller can remove the finializers from the resources.
+This will delete all the DNSRecords.
+
+```bash
+kubectl delete crds dnsrecords.dns.linka.cloud
+```
+
+Then delete the controller and the webhook.
+
+```bash
+kubectl delete -f ./deploy/<provider>.yaml
+kubectl delete -f ./deploy/common.yaml
+```
+
 ## Operator
 
 The operator ensure the dns records' validity and state (active / inactive).
