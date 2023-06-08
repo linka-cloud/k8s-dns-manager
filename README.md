@@ -137,7 +137,7 @@ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/
 ### CRDs, RBAC and Webhook
 
 ```bash
-kubectl apply -f ./deploy/common.yaml
+kubectl apply -f https://raw.githubusercontent.com/linka-cloud/k8s-dns-manager/v0.2.0/deploy/common.yaml
 ```
 
 ### Providers
@@ -153,7 +153,7 @@ Finally, change the nameservers in your DNS registrar console, so they point to 
 coredns server.
 
 ```bash
-kubectl apply -f ./deploy/coredns.yaml
+kubectl apply -f https://raw.githubusercontent.com/linka-cloud/k8s-dns-manager/v0.2.0/deploy/coredns.yaml
 ```
 
 #### Cloudflare
@@ -164,7 +164,7 @@ Required environment variables:
 
 ```bash
 export CLOUDFLARE_TOKEN=...
-cat deploy/cloudflare.yaml | envsubst | kubectl apply -f -
+curl -sL https://raw.githubusercontent.com/linka-cloud/k8s-dns-manager/v0.2.0/deploy/cloudflare.yaml | envsubst | kubectl apply -f -
 ```
 
 #### Hetzner
@@ -175,7 +175,7 @@ Required environment variables:
 
 ```bash
 export HETZNER_TOKEN=...
-cat deploy/hetzner.yaml | envsubst | kubectl apply -f -
+curl -sL https://raw.githubusercontent.com/linka-cloud/k8s-dns-manager/v0.2.0/deploy/hetzner.yaml | envsubst | kubectl apply -f -
 ```
 
 #### OVH
@@ -192,7 +192,7 @@ export OVH_APPLICATION_KEY=...
 export OVH_APPLICATION_SECRET=...
 export OVH_CONSUMER_KEY=...
 export OVH_ENDPOINT=...
-cat deploy/ovh.yaml | envsubst | kubectl apply -f -
+curl -sL https://raw.githubusercontent.com/linka-cloud/k8s-dns-manager/v0.2.0/deploy/ovh.yaml | envsubst | kubectl apply -f -
 ```
 
 #### Scaleway
@@ -204,7 +204,7 @@ Required environment variables:
 ```bash
 export SCALEWAY_SECRET_KEY=...
 export SCALEWAY_ORGANIZATION_ID=...
-cat deploy/scaleway.yaml | envsubst | kubectl apply -f -
+curl -sL https://raw.githubusercontent.com/linka-cloud/k8s-dns-manager/v0.2.0/deploy/scaleway.yaml | envsubst | kubectl apply -f -
 ```
 
 ## Uninstall
@@ -219,8 +219,8 @@ kubectl delete crds dnsrecords.dns.linka.cloud
 Then delete the controller and the webhook.
 
 ```bash
-kubectl delete -f ./deploy/<provider>.yaml
-kubectl delete -f ./deploy/common.yaml
+kubectl delete -f https://raw.githubusercontent.com/linka-cloud/k8s-dns-manager/v0.2.0/deploy/<provider>.yaml
+kubectl delete -f https://raw.githubusercontent.com/linka-cloud/k8s-dns-manager/v0.2.0/deploy/common.yaml
 ```
 
 ## Operator
