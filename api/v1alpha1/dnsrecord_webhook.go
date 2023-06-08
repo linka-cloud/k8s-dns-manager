@@ -44,7 +44,7 @@ func (r *DNSRecord) SetupWebhookWithManager(mgr ctrl.Manager) error {
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 
-// +kubebuilder:webhook:path=/mutate-dns-linka-cloud-v1alpha1-dnsrecord,mutating=true,failurePolicy=fail,groups=dns.linka.cloud,resources=dnsrecord,verbs=create;update,versions=v1alpha1,name=mdnsrecord.kb.io,admissionReviewVersions=v1,sideEffects=None
+// +kubebuilder:webhook:path=/mutate-dns-linka-cloud-v1alpha1-dnsrecord,mutating=true,failurePolicy=fail,sideEffects=None,groups=dns.linka.cloud,resources=dnsrecords,verbs=create;update,versions=v1alpha1,name=mdnsrecord.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Defaulter = &DNSRecord{}
 
@@ -119,7 +119,7 @@ func enforceFqdn(v string) string {
 }
 
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
-// +kubebuilder:webhook:verbs=create;update,path=/validate-dns-linka-cloud-v1alpha1-dnsrecord,mutating=false,failurePolicy=fail,groups=dns.linka.cloud,resources=dnsrecord,versions=v1alpha1,name=vdnsrecord.kb.io,admissionReviewVersions=v1,sideEffects=None
+// +kubebuilder:webhook:path=/validate-dns-linka-cloud-v1alpha1-dnsrecord,mutating=false,failurePolicy=fail,sideEffects=None,groups=dns.linka.cloud,resources=dnsrecords,verbs=create;update,versions=v1alpha1,name=vdnsrecord.kb.io,admissionReviewVersions=v1
 
 var _ webhook.Validator = &DNSRecord{}
 

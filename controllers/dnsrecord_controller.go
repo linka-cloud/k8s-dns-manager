@@ -53,8 +53,8 @@ type DNSRecordReconciler struct {
 	locks                 map[string]*sync.Mutex
 }
 
-// +kubebuilder:rbac:groups=dns.linka.cloud,resources=dnsrecord,verbs=get;list;watch;create;update;patch;delete
-// +kubebuilder:rbac:groups=dns.linka.cloud,resources=dnsrecord/status,verbs=get;update;patch
+// +kubebuilder:rbac:groups=dns.linka.cloud,resources=dnsrecords,verbs=get;list;watch;create;update;patch;delete
+// +kubebuilder:rbac:groups=dns.linka.cloud,resources=dnsrecords/status,verbs=get;update;patch
 // +kubebuilder:rbac:groups="",resources=events,verbs=create;patch
 
 func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {

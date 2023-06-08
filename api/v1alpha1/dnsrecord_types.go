@@ -44,11 +44,11 @@ type DNSRecordStatus struct {
 // +kubebuilder:object:root=true
 // +kubebuilder:resource:scope=Namespaced
 // +kubebuilder:subresource:status
-// +kubebuilder:resource:path=dnsrecord,shortName=records;record;dns
+// +kubebuilder:resource:path=dnsrecords,shortName=records;record;dns
 // +kubebuilder:printcolumn:name="Active",type=boolean,JSONPath=`.status.active`
 // +kubebuilder:printcolumn:name="Record",type=string,JSONPath=`.status.record`
 
-// DNSRecord is the Schema for the dnsrecord API
+// DNSRecord is the Schema for the dnsrecords API
 type DNSRecord struct {
 	metav1.TypeMeta   `json:",inline"`
 	metav1.ObjectMeta `json:"metadata,omitempty"`

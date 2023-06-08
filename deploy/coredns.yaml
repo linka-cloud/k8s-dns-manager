@@ -43,7 +43,7 @@ spec:
         - --enable-webhook
         command:
         - /k8s-dns
-        image: linkacloud/k8s-dns-manager:v0.1.2
+        image: linkacloud/k8s-dns-manager:v0.2.0
         name: manager
         ports:
         - containerPort: 53

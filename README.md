@@ -130,6 +130,10 @@ kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/
 
 ## Installation
 
+⚠️ **When upgrading from v0.1 to v0.2+, due to the renaming of the resource to the plural form, you need to back up all the DNSRecords then delete the old CRD before upgrading.** ⚠️
+
+```bash
+
 ### CRDs, RBAC and Webhook
 
 ```bash

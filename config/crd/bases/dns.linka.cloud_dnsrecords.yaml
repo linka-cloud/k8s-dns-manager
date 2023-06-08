@@ -5,13 +5,13 @@ metadata:
   annotations:
     controller-gen.kubebuilder.io/version: v0.9.2
   creationTimestamp: null
-  name: dnsrecord.dns.linka.cloud
+  name: dnsrecords.dns.linka.cloud
 spec:
   group: dns.linka.cloud
   names:
     kind: DNSRecord
     listKind: DNSRecordList
-    plural: dnsrecord
+    plural: dnsrecords
     shortNames:
     - records
     - record
@@ -29,7 +29,7 @@ spec:
     name: v1alpha1
     schema:
       openAPIV3Schema:
-        description: DNSRecord is the Schema for the dnsrecord API
+        description: DNSRecord is the Schema for the dnsrecords API
         properties:
           apiVersion:
             description: 'APIVersion defines the versioned schema of this representation
