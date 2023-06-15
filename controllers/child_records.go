@@ -26,7 +26,7 @@ const (
 )
 
 func recordName(name, typ, host string, index int) string {
-	return fmt.Sprintf("%s-%s-%s-%d", name, typ, strings.Replace(host, ".", "-", -1), index)
+	return fmt.Sprintf("%s-%s-%s-%d", name, typ, strings.NewReplacer(".", "-", "*", "wildcard").Replace(host), index)
 }
 
 func reconcileChildRecords(ctx context.Context, c client.Client, got, want dnsv1alpha1.DNSRecordList) (ctrl.Result, error) {
