@@ -58,11 +58,10 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		log.Error(err, "unable to list DNSRecords")
 		return ctrl.Result{}, err
 	}
-	var got dnsv1alpha1.DNSRecordList
-	for _, v := range recs.Items {
-		if metav1.IsControlledBy(&v, &ing) {
-			got.Items = append(got.Items, v)
-		}
+	got, err := childRecords(ctx, r.Client, &ing, IngressAnnotation)
+	if err != nil {
+		log.Error(err, "unable to get child DNSRecords")
+		return ctrl.Result{}, err
 	}
 	if ing.Annotations == nil {
 		ing.Annotations = make(map[string]string)
