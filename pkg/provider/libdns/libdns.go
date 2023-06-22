@@ -74,7 +74,7 @@ func (p prov) Reconcile(ctx context.Context, rec *v1alpha1.DNSRecord) (ctrl.Resu
 	}
 	zone := dns.Fqdn(d)
 	recs, err := p.c.GetRecords(ctx, zone)
-	if err != nil && !strings.Contains(strings.ToLower(err.Error()), "not found") {
+	if err != nil && !strings.Contains(strings.ToLower(err.Error()), "not found") && rec.Status.ID != "" {
 		log.Error(err, "get records", "zone", zone)
 		return ctrl.Result{}, false, err
 	}
@@ -104,6 +104,12 @@ func (p prov) Reconcile(ctx context.Context, rec *v1alpha1.DNSRecord) (ctrl.Resu
 	}
 
 	if r == nil {
+		// check if record already exists
+		for _, v := range recs {
+			if Fqdn(v.Name, zone) == want.Name && v.Type == want.Type && v.Value == want.Value {
+				return ctrl.Result{}, false, fmt.Errorf("record already exists: %s", v.Name)
+			}
+		}
 		log.Info("create record")
 		// AppendRecords implementation should prevent from creating duplicate records or overriding existing ones
 		rs, err := p.c.AppendRecords(ctx, zone, []libdns.Record{*want})
