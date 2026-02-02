@@ -17,6 +17,8 @@ limitations under the License.
 package v1alpha1
 
 import (
+	"context"
+	"errors"
 	"net"
 	"strings"
 
@@ -29,6 +31,7 @@ import (
 	ctrl "sigs.k8s.io/controller-runtime"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 
 	"go.linka.cloud/k8s/dns/pkg/ptr"
 )
@@ -36,19 +39,6 @@ import (
 // log is for logging in this package.
 var dnsrecordlog = logf.Log.WithName("dnsrecord-resource")
 
-func (r *DNSRecord) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		Complete()
-}
-
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
-
-// +kubebuilder:webhook:path=/mutate-dns-linka-cloud-v1alpha1-dnsrecord,mutating=true,failurePolicy=fail,sideEffects=None,groups=dns.linka.cloud,resources=dnsrecords,verbs=create;update,versions=v1alpha1,name=mdnsrecord.kb.io,admissionReviewVersions=v1
-
-var _ webhook.Defaulter = &DNSRecord{}
-
-// Default implements webhook.Defaulter so a webhook will be registered for the type
 func (in *DNSRecord) Default() {
 	if in.Spec.Active == nil {
 		in.Spec.Active = ptr.Bool(true)
@@ -106,6 +96,32 @@ func (in *DNSRecord) Default() {
 	}
 }
 
+type DNSRecordWebhook struct{}
+
+func (r *DNSRecord) SetupWebhookWithManager(mgr ctrl.Manager) error {
+	return ctrl.NewWebhookManagedBy(mgr).
+		For(&DNSRecord{}).
+		WithDefaulter(&DNSRecordWebhook{}).
+		WithValidator(&DNSRecordWebhook{}).
+		Complete()
+}
+
+// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
+
+// +kubebuilder:webhook:path=/mutate-dns-linka-cloud-v1alpha1-dnsrecord,mutating=true,failurePolicy=fail,sideEffects=None,groups=dns.linka.cloud,resources=dnsrecords,verbs=create;update,versions=v1alpha1,name=mdnsrecord.kb.io,admissionReviewVersions=v1
+
+var _ webhook.CustomDefaulter = &DNSRecordWebhook{}
+
+// Default implements webhook.Defaulter so a webhook will be registered for the type
+func (w *DNSRecordWebhook) Default(ctx context.Context, o runtime.Object) error {
+	in, ok := o.(*DNSRecord)
+	if !ok {
+		return errors.New("expected a DNSRecord object")
+	}
+	in.Default()
+	return nil
+}
+
 func enforceFqdn(v string) string {
 	v = strings.ToLower(v)
 	d, err := publicsuffix.Domain(v)
@@ -121,27 +137,39 @@ func enforceFqdn(v string) string {
 // TODO(user): change verbs to "verbs=create;update;delete" if you want to enable deletion validation.
 // +kubebuilder:webhook:path=/validate-dns-linka-cloud-v1alpha1-dnsrecord,mutating=false,failurePolicy=fail,sideEffects=None,groups=dns.linka.cloud,resources=dnsrecords,verbs=create;update,versions=v1alpha1,name=vdnsrecord.kb.io,admissionReviewVersions=v1
 
-var _ webhook.Validator = &DNSRecord{}
+var _ webhook.CustomValidator = &DNSRecordWebhook{}
 
 // ValidateCreate implements webhook.Validator so a webhook will be registered for the type
-func (r *DNSRecord) ValidateCreate() error {
+func (w *DNSRecordWebhook) ValidateCreate(ctx context.Context, o runtime.Object) (admission.Warnings, error) {
+	r, ok := o.(*DNSRecord)
+	if !ok {
+		return nil, errors.New("expected a DNSRecord object")
+	}
 	dnsrecordlog.Info("validate create", "name", r.Name)
-	return r.validate()
+	return w.validate(ctx, r)
 }
 
 // ValidateUpdate implements webhook.Validator so a webhook will be registered for the type
-func (r *DNSRecord) ValidateUpdate(old runtime.Object) error {
+func (w *DNSRecordWebhook) ValidateUpdate(ctx context.Context, o runtime.Object, old runtime.Object) (admission.Warnings, error) {
+	r, ok := o.(*DNSRecord)
+	if !ok {
+		return nil, errors.New("expected a DNSRecord object")
+	}
 	dnsrecordlog.Info("validate update", "name", r.Name)
-	return r.validate()
+	return w.validate(ctx, r)
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
-func (r *DNSRecord) ValidateDelete() error {
+func (w *DNSRecordWebhook) ValidateDelete(ctx context.Context, o runtime.Object) (admission.Warnings, error) {
+	r, ok := o.(*DNSRecord)
+	if !ok {
+		return nil, errors.New("expected a DNSRecord object")
+	}
 	dnsrecordlog.Info("validate delete", "name", r.Name)
-	return r.validate()
+	return w.validate(ctx, r)
 }
 
-func (r *DNSRecord) validate() error {
+func (w *DNSRecordWebhook) validate(ctx context.Context, r *DNSRecord) (admission.Warnings, error) {
 	var errs field.ErrorList
 	switch {
 	case r.Spec.A != nil:
@@ -163,9 +191,9 @@ func (r *DNSRecord) validate() error {
 		errs = append(errs, field.Invalid(field.NewPath("spec"), r.Spec, "neither a A, CNAME, TXT, SRV, MX or RAW record"))
 	}
 	if len(errs) == 0 {
-		return nil
+		return nil, nil
 	}
-	return apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: r.Kind}, r.Name, errs)
+	return nil, apierrors.NewInvalid(schema.GroupKind{Group: GroupVersion.Group, Kind: r.Kind}, r.Name, errs)
 }
 
 func (r *ARecord) validate() (errs field.ErrorList) {

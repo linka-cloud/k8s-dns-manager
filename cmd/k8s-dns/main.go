@@ -28,6 +28,8 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth/gcp"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
+	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
 	dnsv1alpha1 "go.linka.cloud/k8s/dns/api/v1alpha1"
 	"go.linka.cloud/k8s/dns/controllers"
@@ -61,11 +63,15 @@ var (
 			ctrl.SetLogger(zap.New(zap.UseDevMode(true), zap.StacktraceLevel(zap2.NewAtomicLevelAt(zapcore.FatalLevel))))
 
 			mgr, err := ctrl.NewManager(ctrl.GetConfigOrDie(), ctrl.Options{
-				Scheme:             scheme,
-				MetricsBindAddress: metricsAddr,
-				Port:               9443,
-				LeaderElection:     enableLeaderElection,
-				LeaderElectionID:   "aa75d9c6.linka.cloud",
+				Scheme:           scheme,
+				LeaderElection:   enableLeaderElection,
+				LeaderElectionID: "aa75d9c6.linka.cloud",
+				WebhookServer: webhook.NewServer(webhook.Options{
+					Port: 9443,
+				}),
+				Metrics: metricsserver.Options{
+					BindAddress: metricsAddr,
+				},
 			})
 			if err != nil {
 				setupLog.Error(err, "unable to start manager")

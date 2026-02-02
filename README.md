@@ -298,6 +298,15 @@ Use "dns [command] --help" for more information about a command.
 
 See [cert-manager-webhook-k8s-dns](https://github.com/linka-cloud/cert-manager-webhook-k8s-dns).
 
+## Velero Backups
+
+When using velero based backups ensure to keep the DNSRecords resources status which stores the remote record id (for external providers).
+
+When restoring, you can do that by adding `DNSRecords` to `spec.restoreStatus.includedResources` into the `velero.io/v1.Restore` definition. 
+
+Otherwise restoring the DNS records will fails as the controller reject overriding any record that it does not own.
+
+
 ## Related Projects
 
 - [Kubernetes ExternalDNS](https://github.com/kubernetes-sigs/external-dns)
