@@ -29,6 +29,8 @@ type Config struct {
 	Cache           int
 	Any             bool
 	ExternalAddress string
+	DNSSecZones     []string
+	DNSSecKey       []string
 }
 
 func (c Config) Render() (string, error) {
@@ -41,6 +43,13 @@ func (c Config) Render() (string, error) {
 
 var configTemplate = template.Must(template.New("corefile").Parse(`
 .:53 {
+{{- if .DNSSecKey }}
+	dnssec {{ range $z := .DNSSecZones }}{{ $z }} {{ end }}{
+		{{- range $k := .DNSSecKey }}
+		key file {{ $k }}
+		{{- end }}
+	}
+{{- end }}
 	k8s_dns{{- if .ExternalAddress }} {{ .ExternalAddress }}{{- end }}
 {{- if .Any }}
 	any

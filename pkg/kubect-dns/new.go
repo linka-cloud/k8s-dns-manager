@@ -18,6 +18,7 @@ package kubect_dns
 
 import (
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/miekg/dns"
@@ -28,23 +29,41 @@ import (
 )
 
 var (
+	name   string
 	NewCmd = &cobra.Command{
 		Use:   "create [record]",
 		Short: "create a DNSRecord from bind record format and print it to stdout",
 		Example: `
 	kubectl dns create 'dns.google.com. IN A 8.8.8.8' | kubectl apply -f -`,
 		Aliases:      []string{"new", "add"},
-		Args:         cobra.ExactArgs(1),
+		Args:         cobra.MaximumNArgs(1),
 		SilenceUsage: true,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			rr, err := dns.NewRR(args[0])
+			var rec string
+			if len(args) == 0 {
+				b, err := io.ReadAll(cmd.InOrStdin())
+				if err != nil {
+					return err
+				}
+				rec = string(b)
+			} else {
+				rec = args[0]
+			}
+			rr, err := dns.NewRR(rec)
 			if err != nil {
-				return fmt.Errorf("invalid record: '%s': %v", args[0], err)
+				return fmt.Errorf("invalid record: '%s': %v", rec, err)
 			}
 			if rr == nil {
-				return fmt.Errorf("invalid record: '%s'", args[0])
+				return fmt.Errorf("invalid record: '%s'", rec)
 			}
 			r := record.FromRR(rr)
+			if name == "" {
+				if dns.Fqdn(rr.Header().Name) == "." || rr.Header().Name == "" {
+					r.Name = "root" + r.Name
+				}
+			} else {
+				r.Name = name
+			}
 			r.Namespace = ns
 			b, err := yaml.Marshal(r)
 			if err != nil {
@@ -57,5 +76,6 @@ var (
 )
 
 func init() {
+	NewCmd.Flags().StringVar(&name, "name", "", "name of the DNSRecord resource")
 	RootCmd.AddCommand(NewCmd)
 }

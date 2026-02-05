@@ -51,6 +51,8 @@ var (
 	dnsMetrics            bool
 	dnsCache              int
 	dnsAny                bool
+	dnsSecKeys            []string
+	dnsSecZones           []string
 	externalAddress       net.IP
 	dnsVerificationServer net.IP
 
@@ -156,6 +158,8 @@ var (
 					Metrics:         dnsMetrics,
 					Any:             dnsAny,
 					ExternalAddress: externalAddress.String(),
+					DNSSecKey:       dnsSecKeys,
+					DNSSecZones:     dnsSecZones,
 				}.Render()
 				setupLog.Info("coredns config", "corefile", conf)
 				if err != nil {
@@ -196,6 +200,8 @@ func init() {
 	Root.Flags().BoolVar(&dnsAny, "dns-any", false, "Enable coredns 'any' plugin")
 	Root.Flags().IntVar(&dnsCache, "dns-cache", 0, "Enable coredns cache with ttl (in seconds)")
 	Root.Flags().IPVarP(&externalAddress, "external-address", "a", net.ParseIP("127.0.0.1"), "The external dns server address, e.g the loadbalancer service IP")
+	Root.Flags().StringSliceVar(&dnsSecKeys, "dnssec-keys", nil, "Path to DNSSEC key files")
+	Root.Flags().StringSliceVar(&dnsSecZones, "dnssec-zones", nil, "Zones to enable DNSSEC for")
 }
 
 func main() {

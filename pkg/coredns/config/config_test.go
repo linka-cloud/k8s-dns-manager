@@ -64,6 +64,60 @@ func TestConfig(t *testing.T) {
 }
 `,
 		},
+		{
+			config: Config{
+				DNSSecKey: []string{"key1"},
+			},
+			want: `
+.:53 {
+	dnssec {
+		key file key1
+	}
+	k8s_dns
+}
+`,
+		},
+		{
+			config: Config{
+				DNSSecKey: []string{"key1", "key2"},
+			},
+			want: `
+.:53 {
+	dnssec {
+		key file key1
+		key file key2
+	}
+	k8s_dns
+}
+`,
+		},
+		{
+			config: Config{
+				Forward:     []string{"8.8.8.8", "8.8.4.4"},
+				Metrics:     true,
+				Errors:      true,
+				Log:         true,
+				Cache:       300,
+				Any:         true,
+				DNSSecKey:   []string{"key1", "key2"},
+				DNSSecZones: []string{"example.org", "example.com"},
+			},
+			want: `
+.:53 {
+	dnssec example.org example.com {
+		key file key1
+		key file key2
+	}
+	k8s_dns
+	any
+	forward . 8.8.8.8 8.8.4.4 
+	cache 300
+	log
+	errors
+	prometheus 0.0.0.0:9153
+}
+`,
+		},
 	}
 	for _, tt := range tests {
 		got, err := tt.config.Render()
