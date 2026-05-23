@@ -144,7 +144,7 @@ func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		}
 		svc, ok := o.(*corev1.Service)
 		if !ok {
-			return false
+			return true
 		}
 		if svc.Spec.Type != corev1.ServiceTypeLoadBalancer {
 			return false
