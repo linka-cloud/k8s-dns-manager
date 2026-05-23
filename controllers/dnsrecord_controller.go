@@ -26,9 +26,12 @@ import (
 	"github.com/miekg/dns"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/util/workqueue"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller"
+	"sigs.k8s.io/controller-runtime/pkg/handler"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+	"sigs.k8s.io/controller-runtime/pkg/source"
 
 	dnsv1alpha1 "go.linka.cloud/k8s/dns/api/v1alpha1"
 	"go.linka.cloud/k8s/dns/pkg/provider"
@@ -172,10 +175,12 @@ func (r *DNSRecordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 func (r *DNSRecordReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	r.recorder = recorder.New(mgr.GetEventRecorderFor("DNSRecord"))
 	r.locks = make(map[string]*sync.Mutex)
-	return ctrl.NewControllerManagedBy(mgr).
-		For(&dnsv1alpha1.DNSRecord{}).
-		WithOptions(controller.Options{MaxConcurrentReconciles: 8}).
-		Complete(r)
+	b := ctrl.NewControllerManagedBy(mgr).
+		For(&dnsv1alpha1.DNSRecord{})
+	if w, ok := any(r.Provider).(provider.Watcher); ok {
+		b.WatchesRawSource(&watchSource{w: w})
+	}
+	return b.Complete(r)
 }
 
 func (r *DNSRecordReconciler) lookup(ctx context.Context, rr dns.RR) (bool, error) {
@@ -247,4 +252,19 @@ func recordState(ok bool) string {
 		return "active"
 	}
 	return "inactive"
+}
+
+var _ source.Source = (*watchSource)(nil)
+
+type watchSource struct {
+	source.Source
+	w provider.Watcher
+}
+
+func (w *watchSource) Start(ctx context.Context, wq workqueue.TypedRateLimitingInterface[reconcile.Request]) error {
+	ch, err := w.w.Watch(ctx)
+	if err != nil {
+		return err
+	}
+	return source.Channel(ch, &handler.EnqueueRequestForObject{}).Start(ctx, wq)
 }

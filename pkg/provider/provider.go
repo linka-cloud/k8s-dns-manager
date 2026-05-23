@@ -22,6 +22,7 @@ import (
 	"fmt"
 
 	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 
 	dnsv1alpha1 "go.linka.cloud/k8s/dns/api/v1alpha1"
 )
@@ -52,6 +53,10 @@ type Factory func() (Provider, error)
 
 type Provider interface {
 	Reconcile(ctx context.Context, rec *dnsv1alpha1.DNSRecord) (ctrl.Result, bool, error)
+}
+
+type Watcher interface {
+	Watch(ctx context.Context) (<-chan event.GenericEvent, error)
 }
 
 type Func func(ctx context.Context, rec *dnsv1alpha1.DNSRecord) (ctrl.Result, bool, error)
